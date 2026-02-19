@@ -1,0 +1,81 @@
+# ============================================
+# Generador de Recursos Evangelísticos
+# Consolidated .gitignore
+# ============================================
+
+# ============================================
+# Python / Backend
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ============================================
+# Node.js / Frontend
+# ============================================
+node_modules/
+dist/
+dist-ssr/
+coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ============================================
+# Environment Files
+# ============================================
+.env
+.env.local
+.env.*.local
+*.local
+
+# ============================================
+# Temporary Files
+# ============================================
+temp_files/*.pdf
+temp_files/*.docx
+temp_files/*.tiff
+backend/temp_files/*.pdf
+backend/temp_files/*.docx
+backend/temp_files/*.tiff
+
+# ============================================
+# Logs
+# ============================================
+*.log
+logs/
+
+# ============================================
+# OS Files
+# ============================================
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# ============================================
+# IDE / Editor
+# ============================================
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*.sw?
+*~
