@@ -227,18 +227,52 @@ class DocumentGenerator:
         Raises:
             subprocess.CalledProcessError: Si LibreOffice falla
         """
+        # Detectar el ejecutable de LibreOffice según el sistema operativo
+        import platform
+        system = platform.system()
+        
+        if system == "Windows":
+            # Rutas comunes de LibreOffice en Windows
+            possible_paths = [
+                r"C:\Program Files\LibreOffice\program\soffice.exe",
+                r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
+            ]
+            libreoffice_cmd = None
+            for path in possible_paths:
+                if os.path.exists(path):
+                    libreoffice_cmd = path
+                    break
+            
+            if not libreoffice_cmd:
+                raise FileNotFoundError(
+                    "LibreOffice no encontrado. Por favor instala LibreOffice desde https://www.libreoffice.org/"
+                )
+        else:
+            # Linux/Mac
+            libreoffice_cmd = "libreoffice"
+        
+        # Convertir rutas a absolutas para evitar problemas
+        docx_path_abs = os.path.abspath(docx_path)
+        output_dir_abs = os.path.abspath(os.path.dirname(pdf_path))
+        
         # Comando para LibreOffice en modo headless
         cmd = [
-            'libreoffice',
+            libreoffice_cmd,
             '--headless',
             '--convert-to', 'pdf',
-            '--outdir', os.path.dirname(pdf_path),
-            docx_path
+            '--outdir', output_dir_abs,
+            docx_path_abs
         ]
         
-        subprocess.run(cmd, check=True, capture_output=True)
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
         
-        # LibreOffice genera el PDF con el mismo nombre base
-        generated_pdf = docx_path.replace('.docx', '.pdf')
-        if generated_pdf != pdf_path:
-            os.rename(generated_pdf, pdf_path)
+        # LibreOffice genera el PDF con el mismo nombre base en el directorio de salida
+        base_name = os.path.basename(docx_path_abs).replace('.docx', '.pdf')
+        generated_pdf = os.path.join(output_dir_abs, base_name)
+        
+        # Si el PDF generado tiene un nombre diferente al esperado, renombrarlo
+        pdf_path_abs = os.path.abspath(pdf_path)
+        if generated_pdf != pdf_path_abs and os.path.exists(generated_pdf):
+            if os.path.exists(pdf_path_abs):
+                os.remove(pdf_path_abs)
+            os.rename(generated_pdf, pdf_path_abs)

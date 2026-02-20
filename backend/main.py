@@ -175,6 +175,27 @@ async def generate_documents(request: GenerateRequest):
         raise HTTPException(status_code=500, detail=f"Error generando documentos: {str(e)}")
 
 
+@app.get("/api/preview/{filename}")
+async def preview_file(filename: str):
+    """
+    Preview a generated PDF file inline in browser
+    Returns the file with inline content disposition
+    """
+    file_path = file_service.get_file_path(filename)
+    
+    if not file_path:
+        raise HTTPException(status_code=404, detail="Archivo no encontrado")
+    
+    try:
+        return FileResponse(
+            path=file_path,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"inline; filename={filename}"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al previsualizar archivo: {str(e)}")
+
+
 @app.get("/api/download/{filename}")
 async def download_file(filename: str):
     """

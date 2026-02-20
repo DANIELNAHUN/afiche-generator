@@ -65,6 +65,11 @@ export default {
     return response.data
   },
   
+  // Preview endpoint (for inline viewing)
+  getPreviewUrl(filename) {
+    return `${API_BASE_URL}/api/preview/${filename}`
+  },
+  
   // Download endpoint
   getDownloadUrl(filename) {
     return `${API_BASE_URL}/api/download/${filename}`

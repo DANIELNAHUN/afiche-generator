@@ -30,6 +30,7 @@
             {{ questionText }}
           </label>
           <input
+            ref="inputRef"
             v-model="answer"
             type="text"
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 
@@ -53,7 +54,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSessionStore } from '../stores/session'
 import api from '../services/api'
@@ -67,6 +68,7 @@ const questionText = ref('')
 const answer = ref('')
 const loading = ref(false)
 const errorMessage = ref('')
+const inputRef = ref(null)
 
 onMounted(async () => {
   try {
@@ -75,6 +77,8 @@ onMounted(async () => {
     currentQuestion.value = response.question_number
     totalQuestions.value = response.total_questions
     questionText.value = response.question_text
+    await nextTick()
+    inputRef.value?.focus()
   } catch (error) {
     errorMessage.value = 'Error al iniciar sesión. Por favor, intenta de nuevo.'
   }
@@ -97,6 +101,9 @@ const handleSubmit = async () => {
         currentQuestion.value = response.next_question
         questionText.value = response.question_text
         answer.value = ''
+        loading.value = false
+        await nextTick()
+        inputRef.value?.focus()
       } else {
         // Autenticación completa
         sessionStore.setAuthenticated(true)
@@ -108,10 +115,12 @@ const handleSubmit = async () => {
       currentQuestion.value = response.next_question
       questionText.value = response.question_text
       answer.value = ''
+      loading.value = false
+      await nextTick()
+      inputRef.value?.focus()
     }
   } catch (error) {
     errorMessage.value = error.message || 'Error al validar respuesta. Por favor, intenta de nuevo.'
-  } finally {
     loading.value = false
   }
 }
