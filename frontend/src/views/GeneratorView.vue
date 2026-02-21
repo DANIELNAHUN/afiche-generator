@@ -17,28 +17,74 @@
               <label class="block text-gray-700 font-medium mb-2">
                 Fecha del Evento *
               </label>
-              <input
-                v-model="formData.fecha_evento"
-                type="text"
-                placeholder="Ej: 15 de Diciembre, 2024"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 
-                       focus:ring-blue-500 focus:border-transparent"
-                required
-              />
+              <div class="relative">
+                <input
+                  v-model="selectedDateDisplay"
+                  type="date"
+                  @change="handleDateChange"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 
+                         focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+                <div v-if="formData.fecha_evento" class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p class="text-sm text-gray-600">Formato para el documento:</p>
+                  <p class="text-lg font-semibold text-blue-700">{{ formData.fecha_evento }}</p>
+                </div>
+              </div>
             </div>
             
             <div>
               <label class="block text-gray-700 font-medium mb-2">
                 Hora del Evento *
               </label>
-              <input
-                v-model="formData.hora_evento"
-                type="text"
-                placeholder="Ej: 7:00 PM"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 
-                       focus:ring-blue-500 focus:border-transparent"
-                required
-              />
+              <div class="flex gap-2">
+                <!-- Selector de Hora -->
+                <select
+                  v-model="timeComponents.hour"
+                  @change="updateTimeString"
+                  class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 
+                         focus:ring-blue-500 focus:border-transparent"
+                  required
+                >
+                  <option value="" disabled>Hora</option>
+                  <option v-for="h in 12" :key="h" :value="h">{{ h }}</option>
+                </select>
+                
+                <span class="flex items-center text-gray-600 font-bold text-xl">:</span>
+                
+                <!-- Selector de Minutos -->
+                <select
+                  v-model="timeComponents.minute"
+                  @change="updateTimeString"
+                  class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 
+                         focus:ring-blue-500 focus:border-transparent"
+                  required
+                >
+                  <option value="" disabled>Min</option>
+                  <option v-for="m in 60" :key="m-1" :value="String(m-1).padStart(2, '0')">
+                    {{ String(m-1).padStart(2, '0') }}
+                  </option>
+                </select>
+                
+                <!-- Selector AM/PM -->
+                <select
+                  v-model="timeComponents.period"
+                  @change="updateTimeString"
+                  class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 
+                         focus:ring-blue-500 focus:border-transparent"
+                  required
+                >
+                  <option value="" disabled>AM/PM</option>
+                  <option value="AM">AM</option>
+                  <option value="PM">PM</option>
+                </select>
+              </div>
+              
+              <!-- Vista previa de la hora formateada -->
+              <div v-if="formData.hora_evento" class="mt-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                <p class="text-sm text-gray-600">Hora seleccionada:</p>
+                <p class="text-lg font-semibold text-purple-700">{{ formData.hora_evento }}</p>
+              </div>
             </div>
             
             <div>
@@ -50,7 +96,9 @@
                 type="text"
                 placeholder="Ej: Auditorio Central"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 
-                       focus:ring-blue-500 focus:border-transparent"
+                       focus:ring-blue-500 focus:border-transparent uppercase"
+                style="text-transform: uppercase"
+                @input="formData.lugar_evento = $event.target.value.toUpperCase()"
                 required
               />
             </div>
@@ -75,7 +123,7 @@
               <input
                 v-model="formData.nombre_proyecto"
                 type="text"
-                placeholder="Ej: Campaña_Navidad_2024"
+                placeholder="Ej: Campaña_Ovalo_2026"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 
                        focus:ring-blue-500 focus:border-transparent"
                 required
@@ -203,16 +251,63 @@ const sessionStore = useSessionStore()
 
 const formData = ref({
   fecha_evento: '',
-  hora_evento: '',
+  hora_evento: '5:30 PM',
   lugar_evento: '',
   referencia_evento: '',
   nombre_proyecto: ''
+})
+
+const timeComponents = ref({
+  hour: '5',
+  minute: '30',
+  period: 'PM'
 })
 
 const generating = ref(false)
 const previewUrl = ref(null)
 const generatedDocuments = ref([])
 const selectedPreviewType = ref('a4')
+const selectedDateDisplay = ref('')
+
+// Función para convertir fecha a formato español
+const handleDateChange = (event) => {
+  const dateValue = event.target.value // Formato: YYYY-MM-DD
+  
+  if (!dateValue) {
+    formData.value.fecha_evento = ''
+    return
+  }
+  
+  const [year, month, day] = dateValue.split('-')
+  const date = new Date(year, month - 1, day)
+  
+  // Nombres de días en español
+  const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+  
+  // Nombres de meses en español
+  const meses = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ]
+  
+  const nombreDia = diasSemana[date.getDay()]
+  const numeroDia = parseInt(day, 10)
+  const nombreMes = meses[date.getMonth()]
+  
+  // Formato: "{nombre_dia} {dia} de {nombre_mes}"
+  formData.value.fecha_evento = `${nombreDia} ${numeroDia} de ${nombreMes}`
+}
+
+// Función para actualizar el string de hora desde los componentes
+const updateTimeString = () => {
+  const { hour, minute, period } = timeComponents.value
+  
+  if (hour && minute && period) {
+    formData.value.hora_evento = `${hour}:${minute} ${period}`
+  } else {
+    formData.value.hora_evento = ''
+  }
+}
 
 const handleGenerate = async () => {
   generating.value = true
