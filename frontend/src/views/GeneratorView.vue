@@ -61,7 +61,7 @@
                   required
                 >
                   <option value="" disabled>Min</option>
-                  <option v-for="m in 60" :key="m-1" :value="String(m-1).padStart(2, '0')">
+                  <option v-for="m in [1,16,31,46]" :key="m-1" :value="String(m-1).padStart(2, '0')">
                     {{ String(m-1).padStart(2, '0') }}
                   </option>
                 </select>
@@ -294,8 +294,8 @@ const handleDateChange = (event) => {
   const numeroDia = parseInt(day, 10)
   const nombreMes = meses[date.getMonth()]
   
-  // Formato: "{nombre_dia} {dia} de {nombre_mes}"
-  formData.value.fecha_evento = `${nombreDia} ${numeroDia} de ${nombreMes}`
+  // Formato: "{nombre_dia} {dia} de {nombre_mes}" en MAYÚSCULAS
+  formData.value.fecha_evento = `${nombreDia} ${numeroDia} de ${nombreMes}`.toUpperCase()
 }
 
 // Función para actualizar el string de hora desde los componentes
