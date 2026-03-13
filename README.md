@@ -9,12 +9,15 @@ Sistema web full-stack para la generación automática de recursos publicitarios
 - ✅ Creación de gigantografías de 1x1.5 metros en modo CMYK
 - ✅ Personalización con datos del evento
 - ✅ Descarga individual de documentos PDF
+- ✅ Generación de audio TTS para anuncios de campaña (ElevenLabs)
+- ✅ Procesamiento de audio con música de fondo
 
 ## Requisitos del Sistema
 
 ### Backend
 - Python 3.10 o superior
 - LibreOffice (para conversión de DOCX a PDF)
+- FFmpeg (para procesamiento de audio)
 - pip (gestor de paquetes de Python)
 
 ### Frontend
@@ -36,6 +39,22 @@ brew install --cask libreoffice
 
 **Windows:**
 Descargar e instalar desde [https://www.libreoffice.org/download/download/](https://www.libreoffice.org/download/download/)
+
+### Instalación de FFmpeg
+
+**Ubuntu/Debian:**
+```bash
+sudo apt-get update
+sudo apt-get install ffmpeg
+```
+
+**macOS:**
+```bash
+brew install ffmpeg
+```
+
+**Windows:**
+Descargar desde [https://ffmpeg.org/download.html](https://ffmpeg.org/download.html) y agregar al PATH del sistema.
 
 ## Instalación
 
@@ -328,10 +347,18 @@ VITE_ENABLE_CONSOLE_LOGS=false
 
 ## API Endpoints
 
+### Documentos
 - `POST /api/auth/start-session` - Iniciar sesión de autenticación
 - `POST /api/auth/validate-answer` - Validar respuesta de pregunta
 - `POST /api/generate` - Generar documentos PDF
 - `GET /api/download/{filename}` - Descargar archivo PDF
+
+### Audio (Nuevo)
+- `POST /api/audio/generate-tts` - Generar audio TTS con ElevenLabs
+- `POST /api/audio/process-campaign` - Procesar audio de campaña completo
+- `GET /api/audio/test-connection` - Probar conexión con ElevenLabs API
+
+Para más detalles sobre los endpoints de audio, ver [INTEGRATION.md](backend/services/generador_audio_campaña/INTEGRATION.md)
 
 ## Tecnologías Utilizadas
 
@@ -341,6 +368,8 @@ VITE_ENABLE_CONSOLE_LOGS=false
 - Pillow - Procesamiento de imágenes
 - pdf2image - Conversión de PDF a imagen
 - reportlab - Generación de PDFs
+- pydub - Procesamiento de audio
+- elevenlabs - Cliente API de ElevenLabs
 - Hypothesis - Property-based testing
 - pytest - Framework de testing
 

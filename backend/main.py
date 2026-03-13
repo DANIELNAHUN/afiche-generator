@@ -17,6 +17,8 @@ from services.auth_service import AuthService
 from services.template_processor import TemplateProcessor
 from services.document_generator import DocumentGenerator
 from services.file_service import FileService
+from services.audio_campaign_service import AudioCampaignService
+from audio_endpoints import register_audio_endpoints
 
 # Create FastAPI app
 app = FastAPI(
@@ -41,6 +43,10 @@ template_processor = TemplateProcessor()
 temp_storage_path = os.getenv("TEMP_STORAGE_PATH", "./temp_files")
 document_generator = DocumentGenerator(template_processor, temp_storage_path)
 file_service = FileService(temp_storage_path)
+audio_campaign_service = AudioCampaignService(temp_storage_path)
+
+# Register audio endpoints
+register_audio_endpoints(app, auth_service, audio_campaign_service)
 
 
 # Pydantic Models

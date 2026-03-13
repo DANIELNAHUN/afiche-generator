@@ -9,3 +9,6 @@ pytest
 pytest-cov
 python-multipart
 python-dotenv
+pydub
+audioop-lts
+elevenlabs
