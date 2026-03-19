@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 import os
 from dotenv import load_dotenv
+import mimetypes
 
 # Cargar variables de entorno desde .env
 load_dotenv()
@@ -214,9 +215,13 @@ async def download_file(filename: str):
         raise HTTPException(status_code=404, detail="Archivo no encontrado")
     
     try:
+        media_type, _ = mimetypes.guess_type(file_path)
+        if media_type is None:
+            media_type = "application/octet-stream"
+            
         return FileResponse(
             path=file_path,
-            media_type="application/pdf",
+            media_type=media_type,
             filename=filename
         )
     except Exception as e:

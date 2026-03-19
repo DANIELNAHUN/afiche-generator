@@ -29,20 +29,21 @@ class AudioProcessor:
     y fondos musicales, aplicar efectos, combinarlos y exportar el resultado final.
     """
     
-    def __init__(self, source_folder: Path, output_folder: Path):
+    def __init__(self, source_folder: Path, output_folder: Path, event_audio_path: str = None):
         """
         Inicializa el AudioProcessor con carpetas de origen y destino.
         
         Args:
             source_folder: Path a la carpeta que contiene los archivos de audio de origen
             output_folder: Path a la carpeta donde se guardará el archivo final
+            event_audio_path: Path al archivo de audio dinámico para esta iteración
         """
         self.source_folder = Path(source_folder)
         self.output_folder = Path(output_folder)
         
         # Inicializar todos los componentes
         self.file_loader = FileLoader(self.source_folder)
-        self.locutor_processor = LocutorProcessor(self.file_loader)
+        self.locutor_processor = LocutorProcessor(self.file_loader, event_audio_path)
         self.background_processor = BackgroundMusicProcessor(self.file_loader)
         self.audio_combiner = AudioCombiner()
         self.audio_exporter = AudioExporter(self.output_folder)
@@ -51,7 +52,7 @@ class AudioProcessor:
         logger.info(f"Source folder: {self.source_folder}")
         logger.info(f"Output folder: {self.output_folder}")
     
-    def process(self) -> ProcessingResult:
+    def process(self, version_suffix: str = "") -> ProcessingResult:
         """
         Ejecuta el pipeline completo de procesamiento de audio.
         
@@ -144,7 +145,7 @@ class AudioProcessor:
             
             # Etapa 9: Exportar audio final
             logger.info("Stage 9: Exporting final audio")
-            output_filename = "Gran_Campana_Final"
+            output_filename = f"Gran_Campana_Final{version_suffix}"
             output_path = self.audio_exporter.export(combined_audio, output_filename)
             logger.info(f"Audio export completed: {output_path}")
             

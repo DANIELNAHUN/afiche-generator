@@ -26,24 +26,29 @@ class LocutorProcessor:
     omitiendo archivos faltantes y continuando con los siguientes.
     """
     
-    # Secuencia específica de archivos de locutor en orden
-    LOCUTOR_SEQUENCE = [
-        'Gran Campaña - Introduccion.wav',
-        'Gran Campaña - Hora y lugar del evento.mp3',
-        'Gran Campaña - Cuerpo.mp3',
-        'Gran Campaña - Hora y lugar del evento.mp3',
-        'Gran Campaña - Cierre.mp3'
-    ]
-    
-    def __init__(self, file_loader: FileLoader):
+
+    def __init__(self, file_loader: FileLoader, event_audio_path: str = None):
         """
         Inicializa el processor con un FileLoader.
         
         Args:
             file_loader: Instancia de FileLoader para cargar archivos de audio
+            event_audio_path: Path al archivo de audio dinámico 'HOY' o 'ESTE'
         """
         self.file_loader = file_loader
+        self.event_audio_path = event_audio_path or 'Gran Campaña - Hora y lugar del evento.mp3'
+        
+        # Secuencia específica de archivos de locutor en orden
+        self.LOCUTOR_SEQUENCE = [
+            'Gran Campaña - Introduccion.wav',
+            self.event_audio_path,
+            'Gran Campaña - Cuerpo.mp3',
+            self.event_audio_path,
+            'Gran Campaña - Cierre.mp3'
+        ]
+        
         logger.info("LocutorProcessor initialized")
+        logger.info(f"Using locutor sequence: {self.LOCUTOR_SEQUENCE}")
     
     def unify_locutor_audio(self, export_path: Optional[Path] = None, export_filename: str = "locutor_unificado", 
                            reduce_silences: bool = True, max_silence_duration: float = 0.7,

@@ -36,7 +36,7 @@ class ProcessAudioRequest(BaseModel):
 class ProcessAudioResponse(BaseModel):
     """Response for audio processing"""
     success: bool
-    output_file: str
+    output_files: list[str]
     duration_seconds: float
     warnings: list
 
@@ -105,7 +105,7 @@ def register_audio_endpoints(app, auth_service, audio_campaign_service: AudioCam
             
             return ProcessAudioResponse(
                 success=result["success"],
-                output_file=result["output_file"],
+                output_files=result["output_files"],
                 duration_seconds=result["duration_seconds"],
                 warnings=result["warnings"]
             )
@@ -145,11 +145,12 @@ def register_audio_endpoints(app, auth_service, audio_campaign_service: AudioCam
     @app.post("/api/audio/upload-event-audio", response_model=UploadEventAudioResponse)
     async def upload_event_audio(
         session_id: str = Form(...),
-        file: UploadFile = File(...)
+        file_hoy: UploadFile = File(...),
+        file_este: UploadFile = File(...)
     ):
         """
-        Upload MP3 file for event audio (Gran Campaña - Hora y lugar del evento.mp3).
-        The file will be stored temporarily and used for audio generation.
+        Upload MP3 files for event audio (HOY and ESTE versions).
+        The files will be stored temporarily and used for audio generation.
         Requires authenticated session.
         """
         # Verify authentication
@@ -157,23 +158,23 @@ def register_audio_endpoints(app, auth_service, audio_campaign_service: AudioCam
             raise HTTPException(status_code=401, detail="Sesión no autenticada")
         
         # Validate file type
-        if not file.filename.endswith('.mp3'):
+        if not file_hoy.filename.endswith('.mp3') or not file_este.filename.endswith('.mp3'):
             raise HTTPException(
                 status_code=400,
                 detail="Solo se permiten archivos MP3"
             )
         
         try:
-            # Save uploaded file
-            saved_filename = await audio_campaign_service.save_event_audio(file)
+            # Save uploaded files
+            saved_filenames = await audio_campaign_service.save_event_audios(file_hoy, file_este)
             
             return UploadEventAudioResponse(
                 success=True,
-                filename=saved_filename,
-                message="Archivo de audio subido exitosamente"
+                filename=", ".join(saved_filenames),
+                message="Archivos de audio subidos exitosamente"
             )
         except Exception as e:
             raise HTTPException(
                 status_code=500,
-                detail=f"Error subiendo archivo de audio: {str(e)}"
+                detail=f"Error subiendo archivos de audio: {str(e)}"
             )

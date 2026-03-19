@@ -172,14 +172,14 @@
             </select>
           </div>
           
-          <div v-if="!previewUrl && !generating" class="flex items-center justify-center h-96 bg-gray-100 rounded-lg">
+          <div v-if="!previewUrl && !generating && generatedAudioFiles.length === 0" class="flex items-center justify-center h-96 bg-gray-100 rounded-lg">
             <div class="text-center">
               <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                       d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
               </svg>
               <p class="mt-2 text-gray-500">
-                La previsualización aparecerá aquí después de generar
+                La previsualización o tus descargas aparecerán aquí
               </p>
             </div>
           </div>
@@ -211,7 +211,7 @@
             </div>
             
             <!-- Visor de PDF -->
-            <div class="border border-gray-300 rounded-lg overflow-hidden bg-gray-50">
+            <div v-if="previewUrl" class="border border-gray-300 rounded-lg overflow-hidden bg-gray-50">
               <iframe
                 :src="previewUrl"
                 class="w-full h-[500px]"
@@ -220,29 +220,45 @@
             </div>
             
             <!-- Sección de Descarga -->
-            <div class="space-y-2">
-              <h3 class="text-lg font-semibold text-gray-800">Descargar Archivos</h3>
-              
-              <div class="grid grid-cols-1 gap-2">
-                <button
-                  v-for="doc in generatedDocuments"
-                  :key="doc.type"
-                  @click="handleDownload(doc.filename)"
-                  :disabled="doc.status !== 'success'"
-                  :class="[
-                    'w-full font-semibold py-2 rounded-lg transition duration-200',
-                    doc.status === 'success' 
-                      ? 'bg-green-600 hover:bg-green-700 text-white' 
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  ]"
-                >
-                  <span v-if="doc.status === 'success'">
-                    {{ getDownloadButtonText(doc.type) }}
-                  </span>
-                  <span v-else>
-                    {{ getDownloadButtonText(doc.type) }} - Error
-                  </span>
-                </button>
+            <div class="space-y-4">
+              <div v-if="generatedDocuments.length > 0">
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">Documentos Generados</h3>
+                <div class="grid grid-cols-1 gap-2">
+                  <button
+                    v-for="doc in generatedDocuments"
+                    :key="doc.type"
+                    @click="handleDownload(doc.filename)"
+                    :disabled="doc.status !== 'success'"
+                    :class="[
+                      'w-full font-semibold py-2 rounded-lg transition duration-200',
+                      doc.status === 'success' 
+                        ? 'bg-green-600 hover:bg-green-700 text-white' 
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    ]"
+                  >
+                    <span v-if="doc.status === 'success'">
+                      {{ getDownloadButtonText(doc.type) }}
+                    </span>
+                    <span v-else>
+                      {{ getDownloadButtonText(doc.type) }} - Error
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Audios Generados -->
+              <div v-if="generatedAudioFiles.length > 0">
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">Audios de Campaña</h3>
+                <div class="grid grid-cols-1 gap-2">
+                  <button
+                    v-for="audioFile in generatedAudioFiles"
+                    :key="audioFile"
+                    @click="downloadAudio(audioFile)"
+                    class="w-full font-semibold py-2 rounded-lg transition duration-200 bg-purple-600 hover:bg-purple-700 text-white shadow-sm"
+                  >
+                    Descargar Versión {{ audioFile.includes('HOY') ? 'HOY' : 'ESTE' }}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -256,7 +272,7 @@
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
       @click.self="closeAudioModal"
     >
-      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full p-6">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-2xl font-bold text-gray-800">Generar Audio de Campaña</h2>
           <button
@@ -272,57 +288,114 @@
         <div class="space-y-4">
           <div>
             <p class="text-gray-600 mb-4">
-              Sube el archivo MP3 con la información de hora y lugar del evento.
+              Sube los archivos MP3 con la información de hora y lugar del evento para ambas versiones.
             </p>
             
-            <!-- Área de subida de archivo -->
-            <div
-              @dragover.prevent="dragOver = true"
-              @dragleave.prevent="dragOver = false"
-              @drop.prevent="handleFileDrop"
-              :class="[
-                'border-2 border-dashed rounded-lg p-6 text-center transition',
-                dragOver ? 'border-purple-500 bg-purple-50' : 'border-gray-300 bg-gray-50'
-              ]"
-            >
-              <input
-                ref="fileInput"
-                type="file"
-                accept=".mp3"
-                @change="handleFileSelect"
-                class="hidden"
-              />
-              
-              <div v-if="!selectedAudioFile">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                        d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                </svg>
-                <p class="mt-2 text-gray-600">
-                  Arrastra tu archivo MP3 aquí o
-                </p>
-                <button
-                  type="button"
-                  @click="$refs.fileInput.click()"
-                  class="mt-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition"
-                >
-                  Seleccionar Archivo
-                </button>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Área de subida HOY -->
+              <div
+                @dragover.prevent="dragOverHoy = true"
+                @dragleave.prevent="dragOverHoy = false"
+                @drop.prevent="handleFileDropHoy"
+                :class="[
+                  'border-2 border-dashed rounded-lg p-4 text-center transition flex flex-col justify-center min-h-[160px]',
+                  dragOverHoy ? 'border-purple-500 bg-purple-50' : 'border-gray-300 bg-gray-50'
+                ]"
+              >
+                <input
+                  ref="fileInputHoy"
+                  type="file"
+                  accept=".mp3"
+                  @change="handleFileSelectHoy"
+                  class="hidden"
+                />
+                
+                <h3 class="font-bold text-gray-700 mb-2">Versión HOY</h3>
+
+                <div v-if="!selectedAudioHoy" class="flex flex-col items-center justify-center">
+                  <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                  </svg>
+                  <p class="mt-2 text-sm text-gray-600">
+                    Arrastra aquí o
+                  </p>
+                  <button
+                    type="button"
+                    @click="$refs.fileInputHoy.click()"
+                    class="mt-2 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition text-sm font-medium w-full max-w-[120px]"
+                  >
+                    Seleccionar
+                  </button>
+                </div>
+                
+                <div v-else class="flex flex-col items-center justify-center space-y-1">
+                  <svg class="h-8 w-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <p class="text-gray-800 font-medium text-sm truncate w-full px-2" :title="selectedAudioHoy.name">{{ selectedAudioHoy.name }}</p>
+                  <p class="text-xs text-gray-500">{{ formatFileSize(selectedAudioHoy.size) }}</p>
+                  <button
+                    type="button"
+                    @click="clearSelectedFileHoy"
+                    class="text-red-600 hover:text-red-700 text-sm font-medium"
+                  >
+                    Cambiar
+                  </button>
+                </div>
               </div>
-              
-              <div v-else class="space-y-2">
-                <svg class="mx-auto h-12 w-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                <p class="text-gray-800 font-medium">{{ selectedAudioFile.name }}</p>
-                <p class="text-sm text-gray-500">{{ formatFileSize(selectedAudioFile.size) }}</p>
-                <button
-                  type="button"
-                  @click="clearSelectedFile"
-                  class="text-red-600 hover:text-red-700 text-sm"
-                >
-                  Cambiar archivo
-                </button>
+
+              <!-- Área de subida ESTE -->
+              <div
+                @dragover.prevent="dragOverEste = true"
+                @dragleave.prevent="dragOverEste = false"
+                @drop.prevent="handleFileDropEste"
+                :class="[
+                  'border-2 border-dashed rounded-lg p-4 text-center transition flex flex-col justify-center min-h-[160px]',
+                  dragOverEste ? 'border-purple-500 bg-purple-50' : 'border-gray-300 bg-gray-50'
+                ]"
+              >
+                <input
+                  ref="fileInputEste"
+                  type="file"
+                  accept=".mp3"
+                  @change="handleFileSelectEste"
+                  class="hidden"
+                />
+
+                <h3 class="font-bold text-gray-700 mb-2">Versión ESTE</h3>
+                
+                <div v-if="!selectedAudioEste" class="flex flex-col items-center justify-center">
+                  <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                  </svg>
+                  <p class="mt-2 text-sm text-gray-600">
+                    Arrastra aquí o
+                  </p>
+                  <button
+                    type="button"
+                    @click="$refs.fileInputEste.click()"
+                    class="mt-2 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition text-sm font-medium w-full max-w-[120px]"
+                  >
+                    Seleccionar
+                  </button>
+                </div>
+                
+                <div v-else class="flex flex-col items-center justify-center space-y-1">
+                  <svg class="h-8 w-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <p class="text-gray-800 font-medium text-sm truncate w-full px-2" :title="selectedAudioEste.name">{{ selectedAudioEste.name }}</p>
+                  <p class="text-xs text-gray-500">{{ formatFileSize(selectedAudioEste.size) }}</p>
+                  <button
+                    type="button"
+                    @click="clearSelectedFileEste"
+                    class="text-red-600 hover:text-red-700 text-sm font-medium"
+                  >
+                    Cambiar
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -341,7 +414,7 @@
             <button
               type="button"
               @click="handleGenerateAudio"
-              :disabled="!selectedAudioFile || generatingAudio"
+              :disabled="!selectedAudioHoy || !selectedAudioEste || generatingAudio"
               class="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg 
                      transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -385,16 +458,19 @@ const timeComponents = ref({
 const generating = ref(false)
 const previewUrl = ref(null)
 const generatedDocuments = ref([])
+const generatedAudioFiles = ref([])
 const selectedPreviewType = ref('a4')
 const selectedDateDisplay = ref('')
 
 // Audio generation state
 const showAudioModal = ref(false)
-const selectedAudioFile = ref(null)
+const selectedAudioHoy = ref(null)
+const selectedAudioEste = ref(null)
 const generatingAudio = ref(false)
 const audioGenerationMessage = ref('')
 const audioGenerationSuccess = ref(false)
-const dragOver = ref(false)
+const dragOverHoy = ref(false)
+const dragOverEste = ref(false)
 
 // Función para convertir fecha a formato español
 const handleDateChange = (event) => {
@@ -442,6 +518,7 @@ const handleGenerate = async () => {
   // Limpiar previsualización anterior
   previewUrl.value = null
   generatedDocuments.value = []
+  generatedAudioFiles.value = []
   
   try {
     const response = await api.generateDocuments(
@@ -481,6 +558,11 @@ const handleDownload = (filename) => {
   window.open(url, '_blank')
 }
 
+const downloadAudio = (filename) => {
+  const url = api.getDownloadUrl(filename)
+  window.open(url, '_blank')
+}
+
 const getDownloadButtonText = (type) => {
   const labels = {
     'a4': 'Descargar A4',
@@ -497,27 +579,50 @@ const closeAudioModal = () => {
   audioGenerationSuccess.value = false
 }
 
-const handleFileSelect = (event) => {
+const handleFileSelectHoy = (event) => {
   const file = event.target.files[0]
   if (file && file.name.endsWith('.mp3')) {
-    selectedAudioFile.value = file
+    selectedAudioHoy.value = file
   } else {
-    alert('Por favor selecciona un archivo MP3 válido')
+    alert('Por favor selecciona un archivo MP3 válido para HOY')
   }
 }
 
-const handleFileDrop = (event) => {
-  dragOver.value = false
+const handleFileDropHoy = (event) => {
+  dragOverHoy.value = false
   const file = event.dataTransfer.files[0]
   if (file && file.name.endsWith('.mp3')) {
-    selectedAudioFile.value = file
+    selectedAudioHoy.value = file
   } else {
-    alert('Por favor selecciona un archivo MP3 válido')
+    alert('Por favor selecciona un archivo MP3 válido para HOY')
   }
 }
 
-const clearSelectedFile = () => {
-  selectedAudioFile.value = null
+const clearSelectedFileHoy = () => {
+  selectedAudioHoy.value = null
+}
+
+const handleFileSelectEste = (event) => {
+  const file = event.target.files[0]
+  if (file && file.name.endsWith('.mp3')) {
+    selectedAudioEste.value = file
+  } else {
+    alert('Por favor selecciona un archivo MP3 válido para ESTE')
+  }
+}
+
+const handleFileDropEste = (event) => {
+  dragOverEste.value = false
+  const file = event.dataTransfer.files[0]
+  if (file && file.name.endsWith('.mp3')) {
+    selectedAudioEste.value = file
+  } else {
+    alert('Por favor selecciona un archivo MP3 válido para ESTE')
+  }
+}
+
+const clearSelectedFileEste = () => {
+  selectedAudioEste.value = null
 }
 
 const formatFileSize = (bytes) => {
@@ -527,8 +632,8 @@ const formatFileSize = (bytes) => {
 }
 
 const handleGenerateAudio = async () => {
-  if (!selectedAudioFile.value) {
-    alert('Por favor selecciona un archivo MP3')
+  if (!selectedAudioHoy.value || !selectedAudioEste.value) {
+    alert('Por favor selecciona ambos archivos MP3 (HOY y ESTE)')
     return
   }
   
@@ -537,9 +642,9 @@ const handleGenerateAudio = async () => {
   audioGenerationSuccess.value = false
   
   try {
-    // Step 1: Upload the MP3 file
-    audioGenerationMessage.value = 'Subiendo archivo de audio...'
-    await api.uploadEventAudio(sessionStore.sessionId, selectedAudioFile.value)
+    // Step 1: Upload the MP3 files
+    audioGenerationMessage.value = 'Subiendo archivos de audio...'
+    await api.uploadEventAudio(sessionStore.sessionId, selectedAudioHoy.value, selectedAudioEste.value)
     
     // Step 2: Process campaign audio
     audioGenerationMessage.value = 'Procesando audio de campaña...'
@@ -547,12 +652,14 @@ const handleGenerateAudio = async () => {
     
     if (result.success) {
       audioGenerationSuccess.value = true
-      audioGenerationMessage.value = `¡Audio generado exitosamente! Duración: ${result.duration_seconds.toFixed(2)}s`
+      audioGenerationMessage.value = `¡Audio generado exitosamente! Duración combinada: ${result.duration_seconds.toFixed(2)}s`
+      generatedAudioFiles.value = result.output_files
       
       // Auto-close modal after 2 seconds
       setTimeout(() => {
         closeAudioModal()
-        clearSelectedFile()
+        clearSelectedFileHoy()
+        clearSelectedFileEste()
       }, 2000)
     }
   } catch (error) {

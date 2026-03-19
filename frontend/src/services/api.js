@@ -76,9 +76,10 @@ export default {
   },
   
   // Audio endpoints
-  async uploadEventAudio(sessionId, file) {
+  async uploadEventAudio(sessionId, fileHoy, fileEste) {
     const formData = new FormData()
-    formData.append('file', file)
+    formData.append('file_hoy', fileHoy)
+    formData.append('file_este', fileEste)
     formData.append('session_id', sessionId)
     
     const response = await axios.post(

@@ -116,6 +116,7 @@ class AudioCampaignService:
     def process_campaign_audio(self) -> Dict[str, any]:
         """
         Process campaign audio by combining locutor files with background music.
+        Generates two separate files: one using the HOY logic, another for ESTE.
         
         Returns:
             Dictionary with processing results
@@ -123,25 +124,40 @@ class AudioCampaignService:
         Raises:
             AudioProcessingError: If processing fails
         """
-        logger.info("Starting campaign audio processing")
+        logger.info("Starting dual campaign audio processing")
         
-        # Initialize audio processor
-        processor = AudioProcessor(
+        target_hoy_path = str((self.temp_storage_path / "temp_evento_hoy.mp3").resolve())
+        target_este_path = str((self.temp_storage_path / "temp_evento_este.mp3").resolve())
+
+        # Process HOY version
+        logger.info("Processing sequence for HOY version")
+        processor_hoy = AudioProcessor(
             source_folder=self.audio_files_path,
-            output_folder=self.temp_storage_path
+            output_folder=self.temp_storage_path,
+            event_audio_path=target_hoy_path
         )
-        
-        # Process audio
-        result = processor.process()
-        
-        if not result.success:
-            raise AudioProcessingError(result.error_message)
+        result_hoy = processor_hoy.process(version_suffix="_HOY")
+
+        if not result_hoy.success:
+            raise AudioProcessingError(f"Failed processing HOY: {result_hoy.error_message}")
+
+        # Process ESTE version
+        logger.info("Processing sequence for ESTE version")
+        processor_este = AudioProcessor(
+            source_folder=self.audio_files_path,
+            output_folder=self.temp_storage_path,
+            event_audio_path=target_este_path
+        )
+        result_este = processor_este.process(version_suffix="_ESTE")
+
+        if not result_este.success:
+            raise AudioProcessingError(f"Failed processing ESTE: {result_este.error_message}")
         
         return {
             "success": True,
-            "output_file": str(result.output_path),
-            "duration_seconds": result.final_duration_ms / 1000,
-            "warnings": result.validation_warnings
+            "output_files": [result_hoy.output_path.name, result_este.output_path.name],
+            "duration_seconds": (result_hoy.final_duration_ms + result_este.final_duration_ms) / 2000,
+            "warnings": result_hoy.validation_warnings + result_este.validation_warnings
         }
     
     def test_elevenlabs_connection(self) -> bool:
@@ -158,37 +174,43 @@ class AudioCampaignService:
         generator = ElevenLabsGenerator(self.api_key, self.voice_id)
         return generator.test_connection()
     
-    async def save_event_audio(self, file) -> str:
+    async def save_event_audios(self, file_hoy, file_este) -> list[str]:
         """
-        Save uploaded event audio file to the audio files directory.
-        Replaces the existing "Gran Campaña - Hora y lugar del evento.mp3" file.
+        Save uploaded event audio files to the temp storage directory.
         
         Args:
-            file: UploadFile object from FastAPI
+            file_hoy: UploadFile object for 'HOY' version
+            file_este: UploadFile object for 'ESTE' version
             
         Returns:
-            Filename of the saved file
+            List of filenames of the saved files
             
         Raises:
-            AudioProcessingError: If file save fails
+            AudioProcessingError: If file saves fail
         """
         try:
-            # Destination path
-            dest_path = self.audio_files_path / self.uploaded_event_audio_filename
+            hoy_filename = "temp_evento_hoy.mp3"
+            este_filename = "temp_evento_este.mp3"
             
-            logger.info(f"Saving uploaded event audio to: {dest_path}")
+            dest_hoy = self.temp_storage_path / hoy_filename
+            dest_este = self.temp_storage_path / este_filename
             
-            # Save the uploaded file
-            with open(dest_path, "wb") as buffer:
-                content = await file.read()
+            logger.info(f"Saving uploaded event HOY audio to: {dest_hoy}")
+            with open(dest_hoy, "wb") as buffer:
+                content = await file_hoy.read()
+                buffer.write(content)
+                
+            logger.info(f"Saving uploaded event ESTE audio to: {dest_este}")
+            with open(dest_este, "wb") as buffer:
+                content = await file_este.read()
                 buffer.write(content)
             
-            logger.info(f"Event audio saved successfully: {self.uploaded_event_audio_filename}")
+            logger.info("Event audios saved successfully")
             
-            return self.uploaded_event_audio_filename
+            return [hoy_filename, este_filename]
             
         except Exception as e:
-            error_msg = f"Failed to save event audio file: {str(e)}"
+            error_msg = f"Failed to save event audio files: {str(e)}"
             logger.error(error_msg)
             raise AudioProcessingError(error_msg)
     
