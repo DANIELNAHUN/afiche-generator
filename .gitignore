@@ -49,10 +49,15 @@ lerna-debug.log*
 temp_files/*.pdf
 temp_files/*.docx
 temp_files/*.tiff
+temp_files/*.mp3
 backend/temp_files/*.pdf
 backend/temp_files/*.docx
 backend/temp_files/*.tiff
+backend/files/output/*
 .ignore/*
+
+# No actualizar cambios en backend/files/
+backend/services/generador_audio_campaña/files/*
 
 # ============================================
 # Logs

@@ -38,7 +38,7 @@ class AudioCampaignService:
             temp_storage_path: Path to temporary storage folder
         """
         self.temp_storage_path = Path(temp_storage_path)
-        self.audio_files_path = Path("backend/services/generador_audio_campaña/files")
+        self.audio_files_path = Path("services/generador_audio_campaña/files")
         self.uploaded_event_audio_filename = "Gran Campaña - Hora y lugar del evento.mp3"
         
         # Get ElevenLabs credentials from environment
