@@ -138,6 +138,16 @@
             >
               {{ generating ? 'Generando...' : 'Generar' }}
             </button>
+            
+            <button
+              type="button"
+              @click="showAudioModal = true"
+              :disabled="generating"
+              class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-lg 
+                     transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Generar Audio
+            </button>
           </form>
         </div>
         
@@ -239,6 +249,115 @@
         </div>
       </div>
     </div>
+    
+    <!-- Modal para Generar Audio -->
+    <div
+      v-if="showAudioModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      @click.self="closeAudioModal"
+    >
+      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-2xl font-bold text-gray-800">Generar Audio de Campaña</h2>
+          <button
+            @click="closeAudioModal"
+            class="text-gray-500 hover:text-gray-700 transition"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <div class="space-y-4">
+          <div>
+            <p class="text-gray-600 mb-4">
+              Sube el archivo MP3 con la información de hora y lugar del evento.
+            </p>
+            
+            <!-- Área de subida de archivo -->
+            <div
+              @dragover.prevent="dragOver = true"
+              @dragleave.prevent="dragOver = false"
+              @drop.prevent="handleFileDrop"
+              :class="[
+                'border-2 border-dashed rounded-lg p-6 text-center transition',
+                dragOver ? 'border-purple-500 bg-purple-50' : 'border-gray-300 bg-gray-50'
+              ]"
+            >
+              <input
+                ref="fileInput"
+                type="file"
+                accept=".mp3"
+                @change="handleFileSelect"
+                class="hidden"
+              />
+              
+              <div v-if="!selectedAudioFile">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                        d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                </svg>
+                <p class="mt-2 text-gray-600">
+                  Arrastra tu archivo MP3 aquí o
+                </p>
+                <button
+                  type="button"
+                  @click="$refs.fileInput.click()"
+                  class="mt-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition"
+                >
+                  Seleccionar Archivo
+                </button>
+              </div>
+              
+              <div v-else class="space-y-2">
+                <svg class="mx-auto h-12 w-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <p class="text-gray-800 font-medium">{{ selectedAudioFile.name }}</p>
+                <p class="text-sm text-gray-500">{{ formatFileSize(selectedAudioFile.size) }}</p>
+                <button
+                  type="button"
+                  @click="clearSelectedFile"
+                  class="text-red-600 hover:text-red-700 text-sm"
+                >
+                  Cambiar archivo
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Botones de acción -->
+          <div class="flex gap-3">
+            <button
+              type="button"
+              @click="closeAudioModal"
+              :disabled="generatingAudio"
+              class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 
+                     transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              @click="handleGenerateAudio"
+              :disabled="!selectedAudioFile || generatingAudio"
+              class="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg 
+                     transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ generatingAudio ? 'Generando...' : 'Generar Audio' }}
+            </button>
+          </div>
+          
+          <!-- Mensaje de progreso -->
+          <div v-if="audioGenerationMessage" class="mt-4 p-3 rounded-lg" :class="audioGenerationSuccess ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'">
+            <p :class="audioGenerationSuccess ? 'text-green-700' : 'text-red-700'">
+              {{ audioGenerationMessage }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -268,6 +387,14 @@ const previewUrl = ref(null)
 const generatedDocuments = ref([])
 const selectedPreviewType = ref('a4')
 const selectedDateDisplay = ref('')
+
+// Audio generation state
+const showAudioModal = ref(false)
+const selectedAudioFile = ref(null)
+const generatingAudio = ref(false)
+const audioGenerationMessage = ref('')
+const audioGenerationSuccess = ref(false)
+const dragOver = ref(false)
 
 // Función para convertir fecha a formato español
 const handleDateChange = (event) => {
@@ -362,4 +489,78 @@ const getDownloadButtonText = (type) => {
   }
   return labels[type] || 'Descargar'
 }
+
+// Audio modal functions
+const closeAudioModal = () => {
+  showAudioModal.value = false
+  audioGenerationMessage.value = ''
+  audioGenerationSuccess.value = false
+}
+
+const handleFileSelect = (event) => {
+  const file = event.target.files[0]
+  if (file && file.name.endsWith('.mp3')) {
+    selectedAudioFile.value = file
+  } else {
+    alert('Por favor selecciona un archivo MP3 válido')
+  }
+}
+
+const handleFileDrop = (event) => {
+  dragOver.value = false
+  const file = event.dataTransfer.files[0]
+  if (file && file.name.endsWith('.mp3')) {
+    selectedAudioFile.value = file
+  } else {
+    alert('Por favor selecciona un archivo MP3 válido')
+  }
+}
+
+const clearSelectedFile = () => {
+  selectedAudioFile.value = null
+}
+
+const formatFileSize = (bytes) => {
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB'
+  return (bytes / (1024 * 1024)).toFixed(2) + ' MB'
+}
+
+const handleGenerateAudio = async () => {
+  if (!selectedAudioFile.value) {
+    alert('Por favor selecciona un archivo MP3')
+    return
+  }
+  
+  generatingAudio.value = true
+  audioGenerationMessage.value = ''
+  audioGenerationSuccess.value = false
+  
+  try {
+    // Step 1: Upload the MP3 file
+    audioGenerationMessage.value = 'Subiendo archivo de audio...'
+    await api.uploadEventAudio(sessionStore.sessionId, selectedAudioFile.value)
+    
+    // Step 2: Process campaign audio
+    audioGenerationMessage.value = 'Procesando audio de campaña...'
+    const result = await api.processCampaignAudio(sessionStore.sessionId)
+    
+    if (result.success) {
+      audioGenerationSuccess.value = true
+      audioGenerationMessage.value = `¡Audio generado exitosamente! Duración: ${result.duration_seconds.toFixed(2)}s`
+      
+      // Auto-close modal after 2 seconds
+      setTimeout(() => {
+        closeAudioModal()
+        clearSelectedFile()
+      }, 2000)
+    }
+  } catch (error) {
+    audioGenerationSuccess.value = false
+    audioGenerationMessage.value = error.message || 'Error al generar audio. Por favor, intenta de nuevo.'
+  } finally {
+    generatingAudio.value = false
+  }
+}
+
 </script>

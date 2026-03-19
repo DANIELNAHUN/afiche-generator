@@ -5,6 +5,8 @@ Integrates the audio campaign generator with the main backend
 from pathlib import Path
 from typing import Dict, Optional
 import os
+import shutil
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
 import sys
@@ -37,6 +39,7 @@ class AudioCampaignService:
         """
         self.temp_storage_path = Path(temp_storage_path)
         self.audio_files_path = Path("backend/services/generador_audio_campaña/files")
+        self.uploaded_event_audio_filename = "Gran Campaña - Hora y lugar del evento.mp3"
         
         # Get ElevenLabs credentials from environment
         self.api_key = os.getenv('ELEVEN_API_KEY')
@@ -154,3 +157,46 @@ class AudioCampaignService:
         
         generator = ElevenLabsGenerator(self.api_key, self.voice_id)
         return generator.test_connection()
+    
+    async def save_event_audio(self, file) -> str:
+        """
+        Save uploaded event audio file to the audio files directory.
+        Replaces the existing "Gran Campaña - Hora y lugar del evento.mp3" file.
+        
+        Args:
+            file: UploadFile object from FastAPI
+            
+        Returns:
+            Filename of the saved file
+            
+        Raises:
+            AudioProcessingError: If file save fails
+        """
+        try:
+            # Destination path
+            dest_path = self.audio_files_path / self.uploaded_event_audio_filename
+            
+            logger.info(f"Saving uploaded event audio to: {dest_path}")
+            
+            # Save the uploaded file
+            with open(dest_path, "wb") as buffer:
+                content = await file.read()
+                buffer.write(content)
+            
+            logger.info(f"Event audio saved successfully: {self.uploaded_event_audio_filename}")
+            
+            return self.uploaded_event_audio_filename
+            
+        except Exception as e:
+            error_msg = f"Failed to save event audio file: {str(e)}"
+            logger.error(error_msg)
+            raise AudioProcessingError(error_msg)
+    
+    def cleanup_old_event_audio(self):
+        """
+        Clean up old event audio files (older than 1 day).
+        This is a placeholder for future implementation if needed.
+        """
+        # For now, we just replace the file each time
+        # In the future, we could implement timestamp-based cleanup
+        pass

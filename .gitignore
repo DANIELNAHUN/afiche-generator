@@ -52,6 +52,7 @@ temp_files/*.tiff
 backend/temp_files/*.pdf
 backend/temp_files/*.docx
 backend/temp_files/*.tiff
+.ignore/*
 
 # ============================================
 # Logs

@@ -73,5 +73,30 @@ export default {
   // Download endpoint
   getDownloadUrl(filename) {
     return `${API_BASE_URL}/api/download/${filename}`
+  },
+  
+  // Audio endpoints
+  async uploadEventAudio(sessionId, file) {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('session_id', sessionId)
+    
+    const response = await axios.post(
+      `${API_BASE_URL}/api/audio/upload-event-audio`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      }
+    )
+    return response.data
+  },
+  
+  async processCampaignAudio(sessionId) {
+    const response = await apiClient.post('/api/audio/process-campaign', {
+      session_id: sessionId
+    })
+    return response.data
   }
 }

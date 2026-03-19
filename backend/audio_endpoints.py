@@ -2,7 +2,7 @@
 Audio Campaign Endpoints
 Separate module for audio generation endpoints
 """
-from fastapi import HTTPException
+from fastapi import HTTPException, UploadFile, File, Form
 from pydantic import BaseModel, Field
 from typing import Optional, Dict
 
@@ -39,6 +39,13 @@ class ProcessAudioResponse(BaseModel):
     output_file: str
     duration_seconds: float
     warnings: list
+
+
+class UploadEventAudioResponse(BaseModel):
+    """Response for event audio upload"""
+    success: bool
+    filename: str
+    message: str
 
 
 def register_audio_endpoints(app, auth_service, audio_campaign_service: AudioCampaignService):
@@ -133,4 +140,40 @@ def register_audio_endpoints(app, auth_service, audio_campaign_service: AudioCam
             raise HTTPException(
                 status_code=500,
                 detail=f"Error probando conexión: {str(e)}"
+            )
+    
+    @app.post("/api/audio/upload-event-audio", response_model=UploadEventAudioResponse)
+    async def upload_event_audio(
+        session_id: str = Form(...),
+        file: UploadFile = File(...)
+    ):
+        """
+        Upload MP3 file for event audio (Gran Campaña - Hora y lugar del evento.mp3).
+        The file will be stored temporarily and used for audio generation.
+        Requires authenticated session.
+        """
+        # Verify authentication
+        if not auth_service.is_authenticated(session_id):
+            raise HTTPException(status_code=401, detail="Sesión no autenticada")
+        
+        # Validate file type
+        if not file.filename.endswith('.mp3'):
+            raise HTTPException(
+                status_code=400,
+                detail="Solo se permiten archivos MP3"
+            )
+        
+        try:
+            # Save uploaded file
+            saved_filename = await audio_campaign_service.save_event_audio(file)
+            
+            return UploadEventAudioResponse(
+                success=True,
+                filename=saved_filename,
+                message="Archivo de audio subido exitosamente"
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error subiendo archivo de audio: {str(e)}"
             )
