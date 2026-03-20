@@ -1,54 +1,65 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
-    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-      <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">
-        Verificación de Seguridad
-      </h2>
-      
-      <!-- Progress indicator -->
-      <div class="mb-6">
+  <div class="min-h-screen bg-background flex items-center justify-center p-6">
+    <div class="w-full max-w-sm">
+
+      <!-- Header -->
+      <div class="text-center mb-10">
+        <p class="text-xs tracking-[0.2em] uppercase text-muted-foreground mb-1">Acceso</p>
+        <h1 class="text-2xl font-medium text-foreground">Verificación</h1>
+      </div>
+
+      <!-- Progress -->
+      <div class="mb-8">
         <div class="flex justify-between mb-2">
-          <span class="text-sm text-gray-600">Pregunta {{ currentQuestion }} de {{ totalQuestions }}</span>
+          <span class="text-xs text-muted-foreground tracking-wide">
+            Pregunta {{ currentQuestion }} de {{ totalQuestions }}
+          </span>
+          <span class="text-xs text-muted-foreground">
+            {{ Math.round((currentQuestion / totalQuestions) * 100) }}%
+          </span>
         </div>
-        <div class="w-full bg-gray-200 rounded-full h-2">
-          <div 
-            class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+        <div class="w-full bg-border rounded-full h-px">
+          <div
+            class="bg-primary h-px rounded-full transition-all duration-500"
             :style="{ width: `${(currentQuestion / totalQuestions) * 100}%` }"
           ></div>
         </div>
       </div>
-      
-      <!-- Error message -->
-      <div v-if="errorMessage" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-        <p class="text-red-700 text-sm">{{ errorMessage }}</p>
+
+      <!-- Error -->
+      <div v-if="errorMessage" class="mb-6 p-4 bg-muted rounded-lg border border-border">
+        <p class="text-sm text-foreground/70">{{ errorMessage }}</p>
       </div>
-      
-      <!-- Question form -->
-      <form @submit.prevent="handleSubmit">
-        <div class="mb-6">
-          <label class="block text-gray-700 font-medium mb-2">
+
+      <!-- Form -->
+      <form @submit.prevent="handleSubmit" class="space-y-6">
+        <div>
+          <label class="block text-sm text-muted-foreground mb-2 tracking-wide">
             {{ questionText }}
           </label>
           <input
             ref="inputRef"
             v-model="answer"
             type="text"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 
-                   focus:ring-blue-500 focus:border-transparent"
+            class="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground
+                   placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring
+                   transition-colors duration-200"
             :disabled="loading"
             required
           />
         </div>
-        
+
         <button
           type="submit"
           :disabled="loading"
-          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg 
-                 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-full px-8 py-3 bg-primary text-primary-foreground rounded-full text-sm font-semibold
+                 tracking-wide transition-all duration-300 hover:bg-primary/90 hover:-translate-y-0.5
+                 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-y-0"
         >
           {{ loading ? 'Validando...' : 'Continuar' }}
         </button>
       </form>
+
     </div>
   </div>
 </template>
@@ -87,17 +98,16 @@ onMounted(async () => {
 const handleSubmit = async () => {
   loading.value = true
   errorMessage.value = ''
-  
+
   try {
     const response = await api.validateAnswer(
       sessionStore.sessionId,
       currentQuestion.value,
       answer.value
     )
-    
+
     if (response.success) {
       if (response.next_question) {
-        // Avanzar a siguiente pregunta
         currentQuestion.value = response.next_question
         questionText.value = response.question_text
         answer.value = ''
@@ -105,12 +115,10 @@ const handleSubmit = async () => {
         await nextTick()
         inputRef.value?.focus()
       } else {
-        // Autenticación completa
         sessionStore.setAuthenticated(true)
         router.push({ name: 'generator' })
       }
     } else {
-      // Respuesta incorrecta - reiniciar
       errorMessage.value = response.message
       currentQuestion.value = response.next_question
       questionText.value = response.question_text
