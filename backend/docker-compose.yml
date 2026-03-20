@@ -1,0 +1,13 @@
+version: '3.9'
+
+services:
+  back-iglesia-ilo:
+    build: .
+    container_name: back-iglesia-ilo
+    ports:
+      - "8100:8000"
+    volumes:
+      - ../temp_files:/app/temp_files
+    env_file:
+      - .env
+    restart: unless-stopped
