@@ -5,7 +5,7 @@
       <!-- Page header -->
       <div class="text-center mb-10">
         <p class="text-xs tracking-[0.2em] uppercase text-muted-foreground mb-1">Herramienta</p>
-        <h1 class="text-2xl font-medium text-foreground">Generador de Recursos</h1>
+        <h1 class="text-2xl font-medium text-foreground">Generador de Recursos para la campaña</h1>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -13,14 +13,14 @@
         <!-- Form -->
         <div class="bg-card border border-border rounded-2xl p-6 space-y-5">
           <h2 class="text-sm font-semibold tracking-[0.15em] uppercase text-muted-foreground">
-            Datos del Evento
+            Datos de la Campaña
           </h2>
 
           <form @submit.prevent="handleGenerate" class="space-y-5">
 
             <!-- Fecha -->
             <div>
-              <label class="block text-sm text-muted-foreground mb-2">Fecha del Evento *</label>
+              <label class="block text-sm text-muted-foreground mb-2">Fecha de la Campaña *</label>
               <input
                 v-model="selectedDateDisplay"
                 type="date"
@@ -37,7 +37,7 @@
 
             <!-- Hora -->
             <div>
-              <label class="block text-sm text-muted-foreground mb-2">Hora del Evento *</label>
+              <label class="block text-sm text-muted-foreground mb-2">Hora de la Campaña *</label>
               <div class="flex gap-2">
                 <select
                   v-model="timeComponents.hour"
@@ -85,7 +85,7 @@
 
             <!-- Lugar -->
             <div>
-              <label class="block text-sm text-muted-foreground mb-2">Lugar del Evento *</label>
+              <label class="block text-sm text-muted-foreground mb-2">Lugar de la Campaña *</label>
               <input
                 v-model="formData.lugar_evento"
                 type="text"
