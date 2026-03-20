@@ -93,7 +93,7 @@
                 class="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-foreground
                        placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring
                        transition-colors uppercase"
-                @input="formData.lugar_evento = $event.target.value.toUpperCase()"
+                @input="handleLugarInput($event)"
                 required
               />
             </div>
@@ -565,6 +565,13 @@ const copyTextEste = async () => {
     copiedEste.value = true
     setTimeout(() => { copiedEste.value = false }, 2000)
   } catch (err) { console.error(err) }
+}
+
+const handleLugarInput = (event) => {
+  const upper = event.target.value.toUpperCase()
+  formData.value.lugar_evento = upper
+  const timestamp = Date.now()
+  formData.value.nombre_proyecto = upper.trim().replace(/\s+/g, '_') + '_' + timestamp
 }
 
 const handleDateChange = (event) => {
