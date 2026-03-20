@@ -5,22 +5,14 @@
       <header class="space-y-4">
         <div class="flex justify-center text-foreground/70">
           <!-- A placeholder elegant dove icon -->
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="56"
-            height="56"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="w-14 h-14"
-          >
-            <path d="M4 12c-1.333-2-2-4.667-2-8 3.333 0 6 1.333 8 4 2-2.667 4.667-4 8-4 0 3.333-.667 6-2 8" />
-            <path d="M11.9 19.3c5-1.5 8.1-6.1 8.1-11.3" />
-            <path d="M4 8c0 3.5 1.7 6.6 4.4 8.5" />
-            <circle cx="15.5" cy="8.5" r=".5" fill="currentColor"/>
+          <svg width="72" height="72" xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:bx="https://boxy-svg.com">
+            <g transform="matrix(1, 0, 0, 1, -4.10958, 9.011007)" style="">
+              <bx:title>Espiritu Santo</bx:title>
+              <g transform="matrix(1, 0, 0, 1, -54.608284, -19.205931)">
+                <path stroke="#957850ff" id="svg_9" d="M 83.762 35.803 C 78.944 40.782 76.085 45.709 76.1 47.387 C 76.115 49.065 83.872 54.346 83.872 54.346 L 97.854 43.125 C 98.201 34.663 93.41 11.763 89.844 21.468 C 85.79 32.497 83.762 35.803 83.762 35.803 Z" stroke-width="2" stroke-miterlimit="10" stroke-linejoin="round" stroke-linecap="round" style="stroke-width: 2; fill: rgb(255, 255, 255);"></path>
+                <path id="svg_8" d="M 94.947 56.715 C 123.307 55.8 113.247 19.205 112.327 23.785 C 111.407 28.365 84.887 54.885 82.137 51.225 C 79.393 47.566 75.733 46.651 73.904 49.395 C 72.074 52.139 71.16 53.054 71.16 53.054 C 71.16 53.054 76.649 52.139 77.564 53.968 C 78.479 55.798 81.38 61.801 86.712 62.201 C 86.712 62.201 88.533 62.823 92.201 70.434 C 96.478 79.31 114.161 70.434 108.671 65.86 C 103.182 61.286 99.523 63.116 96.781 61.286 C 94.037 59.456 94.951 56.712 94.951 56.712 L 94.947 56.715 L 94.947 56.715 Z" stroke-width="2" stroke-miterlimit="10" stroke-linejoin="round" stroke-linecap="round" stroke="#957850ff" style="stroke-width: 2; fill: rgb(255, 255, 255);"></path>
+              </g>
+            </g>
           </svg>
         </div>
         <h1 class="text-lg font-medium tracking-[0.2em] uppercase text-muted-foreground">
