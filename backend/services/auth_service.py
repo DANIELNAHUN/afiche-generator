@@ -1,6 +1,7 @@
 import uuid
 import re
 import os
+import unicodedata
 from typing import Dict, Optional, Tuple
 from dataclasses import dataclass
 import time
@@ -141,7 +142,7 @@ class AuthService:
     
     def _normalize_text(self, text: str) -> str:
         """
-        Normaliza texto: lowercase, trim, remover puntuación extra
+        Normaliza texto: lowercase, trim, remover puntuación extra y acentos/tildes
         
         Args:
             text: Texto a normalizar
@@ -151,6 +152,9 @@ class AuthService:
         """
         # Convertir a minúsculas y eliminar espacios al inicio/final
         text = text.strip().lower()
+        # Eliminar acentos/tildes (á→a, é→e, í→i, ó→o, ú→u, ü→u, ñ→n, etc.)
+        text = unicodedata.normalize('NFD', text)
+        text = ''.join(c for c in text if unicodedata.category(c) != 'Mn')
         # Remover puntuación
         text = re.sub(r'[^\w\s]', '', text)
         # Normalizar espacios múltiples a uno solo
