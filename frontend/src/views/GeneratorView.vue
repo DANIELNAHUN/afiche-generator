@@ -472,13 +472,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useSessionStore } from '../stores/session'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useSessionStore, saveFormData, loadFormData } from '../stores/session'
 import api from '../services/api'
 
 const sessionStore = useSessionStore()
+const router = useRouter()
 
-const formData = ref({
+// Restaurar datos del formulario si la sesión sigue activa
+const savedForm = loadFormData()
+
+const formData = ref(savedForm?.formData ?? {
   fecha_evento: '',
   hora_evento: '5:30 PM',
   lugar_evento: '',
@@ -486,13 +491,39 @@ const formData = ref({
   nombre_proyecto: ''
 })
 
-const timeComponents = ref({ hour: '5', minute: '30', period: 'PM' })
+const timeComponents = ref(savedForm?.timeComponents ?? { hour: '5', minute: '30', period: 'PM' })
+
+// Restaurar la fecha en el input date (formato YYYY-MM-DD)
+const selectedDateDisplay = ref(savedForm?.rawDate ?? '')
+
+// Persistir formulario en localStorage mientras la sesión esté activa
+watch(
+  [formData, timeComponents],
+  () => {
+    if (sessionStore.isAuthenticated) {
+      saveFormData(formData.value, timeComponents.value, selectedDateDisplay.value)
+    }
+  },
+  { deep: true }
+)
+
+// Verificar expiración de sesión periódicamente
+let sessionCheckInterval = null
+onMounted(() => {
+  sessionCheckInterval = setInterval(() => {
+    if (!sessionStore.isAuthenticated) {
+      router.push({ name: 'login' })
+    }
+  }, 15000) // cada 15 segundos
+})
+onUnmounted(() => {
+  clearInterval(sessionCheckInterval)
+})
 const generating = ref(false)
 const previewUrl = ref(null)
 const generatedDocuments = ref([])
 const generatedAudioFiles = ref([])
 const selectedPreviewType = ref('a4')
-const selectedDateDisplay = ref('')
 
 const showAudioModal = ref(false)
 const selectedAudioHoy = ref(null)
@@ -576,12 +607,16 @@ const handleLugarInput = (event) => {
 
 const handleDateChange = (event) => {
   const dateValue = event.target.value
+  selectedDateDisplay.value = dateValue
   if (!dateValue) { formData.value.fecha_evento = ''; return }
   const [year, month, day] = dateValue.split('-')
   const date = new Date(year, month - 1, day)
   const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
   const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
   formData.value.fecha_evento = `${dias[date.getDay()]} ${parseInt(day, 10)} de ${meses[date.getMonth()]}`.toUpperCase()
+  if (sessionStore.isAuthenticated) {
+    saveFormData(formData.value, timeComponents.value, dateValue)
+  }
 }
 
 const updateTimeString = () => {

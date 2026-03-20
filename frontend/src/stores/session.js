@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
 const SESSION_KEY = 'app_session'
+const FORM_KEY = 'app_form_data'
 const SESSION_DURATION_MS = 5 * 60 * 1000 // 5 minutos
 
 function saveToStorage(sessionId) {
@@ -19,21 +20,36 @@ function loadFromStorage() {
     const data = JSON.parse(raw)
     if (Date.now() > data.expiresAt) {
       localStorage.removeItem(SESSION_KEY)
+      localStorage.removeItem(FORM_KEY)
       return null
     }
     return data
   } catch {
     localStorage.removeItem(SESSION_KEY)
+    localStorage.removeItem(FORM_KEY)
     return null
   }
 }
 
 function clearStorage() {
   localStorage.removeItem(SESSION_KEY)
+  localStorage.removeItem(FORM_KEY)
+}
+
+export function saveFormData(formData, timeComponents, rawDate = '') {
+  localStorage.setItem(FORM_KEY, JSON.stringify({ formData, timeComponents, rawDate }))
+}
+
+export function loadFormData() {
+  try {
+    const raw = localStorage.getItem(FORM_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
 }
 
 export const useSessionStore = defineStore('session', () => {
-  // Intentar restaurar sesión persistida al inicializar
   const stored = loadFromStorage()
 
   const sessionId = ref(stored?.sessionId ?? null)
@@ -41,10 +57,8 @@ export const useSessionStore = defineStore('session', () => {
 
   const isAuthenticated = computed(() => {
     if (!authenticated.value || !sessionId.value) return false
-    // Verificar que la sesión en localStorage no haya expirado
     const data = loadFromStorage()
     if (!data) {
-      // Expiró mientras la app estaba abierta
       sessionId.value = null
       authenticated.value = false
       return false
