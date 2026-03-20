@@ -23,8 +23,8 @@
             <circle cx="15.5" cy="8.5" r=".5" fill="currentColor"/>
           </svg>
         </div>
-        <h1 class="text-[13px] font-medium tracking-[0.2em] uppercase text-muted-foreground">
-          Grace Community Church
+        <h1 class="text-lg font-medium tracking-[0.2em] uppercase text-muted-foreground">
+          Iglesia del Verbo de Dios en Ilo
         </h1>
       </header>
     </transition>
@@ -33,10 +33,10 @@
     <transition appear name="slide-up">
       <section class="max-w-2xl style-delay-1">
         <p class="font-serif-display italic text-[clamp(2rem,5vw,3.5rem)] leading-[1.1] text-foreground text-balance">
-          "Peace I leave with you; my peace I give to you."
+          "Si puedes creer, al que cree todo le es posible."
         </p>
         <p class="mt-6 text-[13px] tracking-[0.15em] uppercase text-muted-foreground">
-          — John 14:27
+          — Marcos 9:23
         </p>
       </section>
     </transition>
@@ -48,13 +48,19 @@
           @click="handleStart"
           class="px-8 py-4 bg-primary text-primary-foreground rounded-full text-sm font-semibold tracking-wide shadow-[0_10px_15px_-3px_rgba(0,0,0,0.05),0_4px_6px_-2px_rgba(0,0,0,0.02)] transition-all duration-300 hover:bg-primary/90 hover:-translate-y-0.5 hover:shadow-[0_20px_25px_-5px_rgba(0,0,0,0.08),0_8px_10px_-6px_rgba(0,0,0,0.04)] active:scale-95"
         >
-          Generate poster and audio
+          Generar afiche y audio
         </button>
 
         <div class="space-y-1">
-          <p class="text-sm text-foreground/60">122 Sanctuary Lane, East River</p>
-          <p class="text-xs text-muted-foreground tracking-wide">
-            Sunday Service · 10:00 AM
+          <p class="text-md text-foreground/60">
+          <a href="https://maps.app.goo.gl/uyME8FpoYWg2fQzz8" target="_blank">
+            Ilo, Urb José Olaya D-28
+          </a>
+          </p>
+          <p class="text-sm text-muted-foreground tracking-wide">
+            Estudios Biblicos Diarios · 06:30 PM - 08:00 PM
+            <br>
+            Ayuno Dominical · 09:00 AM - 12:00 PM
           </p>
         </div>
       </footer>

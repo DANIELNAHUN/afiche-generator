@@ -141,7 +141,7 @@
             
             <button
               type="button"
-              @click="showAudioModal = true"
+              @click="openAudioModal"
               :disabled="generating"
               class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-lg 
                      transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -272,7 +272,7 @@
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
       @click.self="closeAudioModal"
     >
-      <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full p-6">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full p-6">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-2xl font-bold text-gray-800">Generar Audio de Campaña</h2>
           <button
@@ -291,28 +291,68 @@
               Sube los archivos MP3 con la información de hora y lugar del evento para ambas versiones.
             </p>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <!-- Área de subida HOY -->
-              <div
-                @dragover.prevent="dragOverHoy = true"
-                @dragleave.prevent="dragOverHoy = false"
-                @drop.prevent="handleFileDropHoy"
-                :class="[
-                  'border-2 border-dashed rounded-lg p-4 text-center transition flex flex-col justify-center min-h-[160px]',
-                  dragOverHoy ? 'border-purple-500 bg-purple-50' : 'border-gray-300 bg-gray-50'
-                ]"
-              >
-                <input
-                  ref="fileInputHoy"
-                  type="file"
-                  accept=".mp3"
-                  @change="handleFileSelectHoy"
-                  class="hidden"
-                />
-                
-                <h3 class="font-bold text-gray-700 mb-2">Versión HOY</h3>
+            <div v-if="showIAMessage" class="mb-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg shadow-sm transition-all duration-300">
+              <div class="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left">
+                <svg class="w-6 h-6 text-blue-500 mb-2 sm:mb-0 sm:mr-3 shrink-0 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div class="text-blue-700 text-sm font-medium">
+                  <p>
+                    Se tiene que registrar con su cuenta de Google, pegar el texto generado y seleccionar la voz de <span class="font-bold">Cesar Rodriguez</span> para generar un mejor resultado. Se abrirá en 5 segundos...
+                  </p>
+                  <p class="mt-1">
+                    Si la pestaña no se abre, 
+                    <a href="https://elevenlabs.io/app/speech-synthesis/text-to-speech" target="_blank" class="underline font-bold hover:text-blue-900 transition-colors">
+                      haz clic aquí para abrirlo manualmente
+                    </a>.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Columna HOY -->
+              <div class="flex flex-col gap-4">
+                <!-- Text box HOY -->
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                  <div class="flex justify-between items-center mb-2">
+                    <label class="text-sm font-semibold text-gray-700">Guión (Versión HOY)</label>
+                    <div class="flex gap-2">
+                      <button @click="copyTextAndRedirectToIA(textHoy)" class="text-blue-600 hover:text-blue-800 text-xs flex items-center gap-1 transition" title="Copiar y abrir IA">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        <span class="font-medium">Copiar en IA</span>
+                      </button>
+                      <button @click="copyTextHoy" class="text-purple-600 hover:text-purple-800 text-xs flex items-center gap-1 transition" title="Copiar texto">
+                        <svg v-if="!copiedHoy" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        <svg v-else class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span :class="{'text-green-600': copiedHoy, 'font-medium': true}">{{ copiedHoy ? 'Copiado' : 'Copiar' }}</span>
+                      </button>
+                    </div>
+                  </div>
+                  <textarea v-model="textHoy" class="w-full text-sm text-gray-700 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500 min-h-[120px] p-2 resize-none"></textarea>
+                </div>
+              
+                <!-- Área de subida HOY -->
+                <div
+                  @dragover.prevent="dragOverHoy = true"
+                  @dragleave.prevent="dragOverHoy = false"
+                  @drop.prevent="handleFileDropHoy"
+                  :class="[
+                    'border-2 border-dashed rounded-lg p-4 text-center transition flex flex-col justify-center min-h-[160px]',
+                    dragOverHoy ? 'border-purple-500 bg-purple-50' : 'border-gray-300 bg-gray-50'
+                  ]"
+                >
+                  <input
+                    ref="fileInputHoy"
+                    type="file"
+                    accept=".mp3"
+                    @change="handleFileSelectHoy"
+                    class="hidden"
+                  />
+                  
+                  <h3 class="font-bold text-gray-700 mb-2">Audio Versión HOY</h3>
 
-                <div v-if="!selectedAudioHoy" class="flex flex-col items-center justify-center">
+                  <div v-if="!selectedAudioHoy" class="flex flex-col items-center justify-center">
                   <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                           d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
@@ -345,27 +385,50 @@
                 </div>
               </div>
 
-              <!-- Área de subida ESTE -->
-              <div
-                @dragover.prevent="dragOverEste = true"
-                @dragleave.prevent="dragOverEste = false"
-                @drop.prevent="handleFileDropEste"
-                :class="[
-                  'border-2 border-dashed rounded-lg p-4 text-center transition flex flex-col justify-center min-h-[160px]',
-                  dragOverEste ? 'border-purple-500 bg-purple-50' : 'border-gray-300 bg-gray-50'
-                ]"
-              >
-                <input
-                  ref="fileInputEste"
-                  type="file"
-                  accept=".mp3"
-                  @change="handleFileSelectEste"
-                  class="hidden"
-                />
+              </div>
 
-                <h3 class="font-bold text-gray-700 mb-2">Versión ESTE</h3>
-                
-                <div v-if="!selectedAudioEste" class="flex flex-col items-center justify-center">
+              <!-- Columna ESTE -->
+              <div class="flex flex-col gap-4">
+                <!-- Text box ESTE -->
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                  <div class="flex justify-between items-center mb-2">
+                    <label class="text-sm font-semibold text-gray-700">Guión (Versión ESTE)</label>
+                    <div class="flex gap-2">
+                      <button @click="copyTextAndRedirectToIA(textEste)" class="text-blue-600 hover:text-blue-800 text-xs flex items-center gap-1 transition" title="Copiar y abrir IA">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        <span class="font-medium">Copiar en IA</span>
+                      </button>
+                      <button @click="copyTextEste" class="text-purple-600 hover:text-purple-800 text-xs flex items-center gap-1 transition" title="Copiar texto">
+                        <svg v-if="!copiedEste" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        <svg v-else class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span :class="{'text-green-600': copiedEste, 'font-medium': true}">{{ copiedEste ? 'Copiado' : 'Copiar' }}</span>
+                      </button>
+                    </div>
+                  </div>
+                  <textarea v-model="textEste" class="w-full text-sm text-gray-700 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500 min-h-[120px] p-2 resize-none"></textarea>
+                </div>
+              
+                <!-- Área de subida ESTE -->
+                <div
+                  @dragover.prevent="dragOverEste = true"
+                  @dragleave.prevent="dragOverEste = false"
+                  @drop.prevent="handleFileDropEste"
+                  :class="[
+                    'border-2 border-dashed rounded-lg p-4 text-center transition flex flex-col justify-center min-h-[160px]',
+                    dragOverEste ? 'border-purple-500 bg-purple-50' : 'border-gray-300 bg-gray-50'
+                  ]"
+                >
+                  <input
+                    ref="fileInputEste"
+                    type="file"
+                    accept=".mp3"
+                    @change="handleFileSelectEste"
+                    class="hidden"
+                  />
+
+                  <h3 class="font-bold text-gray-700 mb-2">Audio Versión ESTE</h3>
+                  
+                  <div v-if="!selectedAudioEste" class="flex flex-col items-center justify-center">
                   <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                           d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
@@ -396,6 +459,7 @@
                     Cambiar
                   </button>
                 </div>
+              </div>
               </div>
             </div>
           </div>
@@ -471,6 +535,95 @@ const audioGenerationMessage = ref('')
 const audioGenerationSuccess = ref(false)
 const dragOverHoy = ref(false)
 const dragOverEste = ref(false)
+
+// Script text state
+const textHoy = ref('')
+const textEste = ref('')
+const copiedHoy = ref(false)
+const copiedEste = ref(false)
+const showIAMessage = ref(false)
+
+const copyTextAndRedirectToIA = async (text) => {
+  try {
+    await navigator.clipboard.writeText(text)
+    showIAMessage.value = true
+    setTimeout(() => {
+      showIAMessage.value = false
+      window.open('https://elevenlabs.io/app/speech-synthesis/text-to-speech', '_blank')
+    }, 5000)
+  } catch (err) {
+    console.error('Error al copiar:', err)
+  }
+}
+
+const openAudioModal = () => {
+  // Generar texto de hora amigable
+  const { hour, minute, period } = timeComponents.value
+  let timeText = formData.value.hora_evento || '[HORA]'
+
+  if (hour && minute && period) {
+    const hourNum = parseInt(hour, 10)
+    let suffix = 'DE LA MAÑANA'
+    
+    if (period === 'PM') {
+      if (hourNum === 12 || hourNum < 7) {
+        suffix = 'DE LA TARDE'
+      } else {
+        suffix = 'DE LA NOCHE'
+      }
+    }
+    
+    const hourToWord = {
+      '1': 'UNA', '2': 'DOS', '3': 'TRES', '4': 'CUATRO', '5': 'CINCO', '6': 'SEIS',
+      '7': 'SIETE', '8': 'OCHO', '9': 'NUEVE', '10': 'DIEZ', '11': 'ONCE', '12': 'DOCE'
+    }
+    
+    const minToWord = {
+      '00': 'EN PUNTO',
+      '15': 'Y QUINCE',
+      '30': 'Y TREINTA',
+      '45': 'Y CUARENTA Y CINCO'
+    }
+    
+    const hStr = hour.toString()
+    const mStr = minute.toString().padStart(2, '0')
+    const hourWord = hourToWord[hStr] || hStr
+    const minWord = minToWord[mStr] || `Y ${mStr}`
+
+    timeText = `${hourWord} ${minWord} ${suffix}`
+  }
+
+  let baseText = `${formData.value.fecha_evento || '[FECHA]'}.. DESDE LAS ${timeText}.. EN LA ${formData.value.lugar_evento || '[LUGAR]'}`
+  if (formData.value.referencia_evento) {
+    baseText += `.. AL COSTADO DE ${formData.value.referencia_evento}`
+  }
+  baseText = baseText.toUpperCase() + '...'
+
+  textHoy.value = `HOY ${baseText}`
+  textEste.value = `ESTE ${baseText}`
+
+  showAudioModal.value = true
+}
+
+const copyTextHoy = async () => {
+  try {
+    await navigator.clipboard.writeText(textHoy.value)
+    copiedHoy.value = true
+    setTimeout(() => { copiedHoy.value = false }, 2000)
+  } catch (err) {
+    console.error('Error al copiar:', err)
+  }
+}
+
+const copyTextEste = async () => {
+  try {
+    await navigator.clipboard.writeText(textEste.value)
+    copiedEste.value = true
+    setTimeout(() => { copiedEste.value = false }, 2000)
+  } catch (err) {
+    console.error('Error al copiar:', err)
+  }
+}
 
 // Función para convertir fecha a formato español
 const handleDateChange = (event) => {
@@ -577,6 +730,7 @@ const closeAudioModal = () => {
   showAudioModal.value = false
   audioGenerationMessage.value = ''
   audioGenerationSuccess.value = false
+  showIAMessage.value = false
 }
 
 const handleFileSelectHoy = (event) => {
