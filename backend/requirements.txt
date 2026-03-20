@@ -12,3 +12,4 @@ python-dotenv
 pydub
 audioop-lts
 elevenlabs
+apscheduler

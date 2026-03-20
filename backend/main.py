@@ -8,8 +8,12 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from typing import Optional, List
 import os
+import glob
+import logging
+from datetime import datetime
 from dotenv import load_dotenv
 import mimetypes
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 # Cargar variables de entorno desde .env
 load_dotenv()
@@ -48,6 +52,29 @@ audio_campaign_service = AudioCampaignService(temp_storage_path)
 
 # Register audio endpoints
 register_audio_endpoints(app, auth_service, audio_campaign_service)
+
+# Scheduler setup
+scheduler = AsyncIOScheduler()
+logger = logging.getLogger(__name__)
+
+def cleanup_temp_files():
+    """Elimina todos los archivos en temp_files excepto .gitkeep"""
+    removed = 0
+    for f in glob.glob(f"{temp_storage_path}/*"):
+        if os.path.isfile(f) and not f.endswith(".gitkeep"):
+            os.remove(f)
+            removed += 1
+    logger.info(f"[{datetime.now()}] Limpieza de temp_files: {removed} archivo(s) eliminado(s)")
+
+@app.on_event("startup")
+async def start_scheduler():
+    scheduler.add_job(cleanup_temp_files, "cron", hour=2, minute=0)
+    scheduler.start()
+    logger.info("Scheduler de limpieza iniciado (diario a las 2:00 AM)")
+
+@app.on_event("shutdown")
+async def stop_scheduler():
+    scheduler.shutdown()
 
 
 # Pydantic Models
