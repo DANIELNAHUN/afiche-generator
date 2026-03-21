@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 
 const SESSION_KEY = 'app_session'
 const FORM_KEY = 'app_form_data'
+const RESULTS_KEY = 'app_results'
 const SESSION_DURATION_MS = 5 * 60 * 1000 // 5 minutos
 
 function saveToStorage(sessionId) {
@@ -21,12 +22,14 @@ function loadFromStorage() {
     if (Date.now() > data.expiresAt) {
       localStorage.removeItem(SESSION_KEY)
       localStorage.removeItem(FORM_KEY)
+      localStorage.removeItem(RESULTS_KEY)
       return null
     }
     return data
   } catch {
     localStorage.removeItem(SESSION_KEY)
     localStorage.removeItem(FORM_KEY)
+    localStorage.removeItem(RESULTS_KEY)
     return null
   }
 }
@@ -34,6 +37,7 @@ function loadFromStorage() {
 function clearStorage() {
   localStorage.removeItem(SESSION_KEY)
   localStorage.removeItem(FORM_KEY)
+  localStorage.removeItem(RESULTS_KEY)
 }
 
 export function saveFormData(formData, timeComponents, rawDate = '') {
@@ -43,6 +47,19 @@ export function saveFormData(formData, timeComponents, rawDate = '') {
 export function loadFormData() {
   try {
     const raw = localStorage.getItem(FORM_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+export function saveResults(documents, audioFiles, selectedPreviewType) {
+  localStorage.setItem(RESULTS_KEY, JSON.stringify({ documents, audioFiles, selectedPreviewType }))
+}
+
+export function loadResults() {
+  try {
+    const raw = localStorage.getItem(RESULTS_KEY)
     return raw ? JSON.parse(raw) : null
   } catch {
     return null

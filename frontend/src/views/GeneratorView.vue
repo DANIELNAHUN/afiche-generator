@@ -474,7 +474,7 @@
 <script setup>
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useSessionStore, saveFormData, loadFormData } from '../stores/session'
+import { useSessionStore, saveFormData, loadFormData, saveResults, loadResults } from '../stores/session'
 import api from '../services/api'
 
 const sessionStore = useSessionStore()
@@ -521,9 +521,18 @@ onUnmounted(() => {
 })
 const generating = ref(false)
 const previewUrl = ref(null)
-const generatedDocuments = ref([])
-const generatedAudioFiles = ref([])
-const selectedPreviewType = ref('a4')
+
+// Restaurar resultados previos si la sesión sigue activa
+const savedResults = loadResults()
+const generatedDocuments = ref(savedResults?.documents ?? [])
+const generatedAudioFiles = ref(savedResults?.audioFiles ?? [])
+const selectedPreviewType = ref(savedResults?.selectedPreviewType ?? 'a4')
+
+// Restaurar previewUrl si había documentos guardados
+if (savedResults?.documents?.length) {
+  const doc = savedResults.documents.find(d => d.type === savedResults.selectedPreviewType && d.status === 'success')
+  if (doc) previewUrl.value = `${api.getPreviewUrl(doc.filename)}?t=${Date.now()}`
+}
 
 const showAudioModal = ref(false)
 const selectedAudioHoy = ref(null)
@@ -634,6 +643,7 @@ const handleGenerate = async () => {
     if (response.success) {
       generatedDocuments.value = response.documents
       updatePreview()
+      saveResults(response.documents, generatedAudioFiles.value, selectedPreviewType.value)
     }
   } catch (error) {
     alert(error.message || 'Error al generar documentos. Por favor, intenta de nuevo.')
@@ -648,6 +658,9 @@ const updatePreview = () => {
     previewUrl.value = `${api.getPreviewUrl(selectedDoc.filename)}?t=${Date.now()}`
   } else {
     previewUrl.value = null
+  }
+  if (sessionStore.isAuthenticated && generatedDocuments.value.length) {
+    saveResults(generatedDocuments.value, generatedAudioFiles.value, selectedPreviewType.value)
   }
 }
 
@@ -714,6 +727,7 @@ const handleGenerateAudio = async () => {
       audioGenerationSuccess.value = true
       audioGenerationMessage.value = `¡Audio generado! Duración: ${result.duration_seconds.toFixed(2)}s`
       generatedAudioFiles.value = result.output_files
+      saveResults(generatedDocuments.value, result.output_files, selectedPreviewType.value)
       setTimeout(() => {
         closeAudioModal()
         clearSelectedFileHoy()
