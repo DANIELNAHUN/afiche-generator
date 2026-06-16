@@ -183,9 +183,11 @@ class BackgroundMusicProcessor:
         
         # Sección 2: Fade in de 20% a 100% en 1 segundo + últimos 4 segundos a 100%
         section_2 = audio[fade_start:]
+        # Bajar a 20% (-14dB) primero para que el fade arranque desde ese nivel
+        section_2_reduced = section_2 - 14.0
         # Aplicar fade de -14dB (20%) a 0dB (100%) solo en el primer segundo
         fade_duration = 1000  # 1 segundo
-        section_2_faded = section_2.fade(from_gain=-14.0, to_gain=0.0, start=0, end=fade_duration)
+        section_2_faded = section_2_reduced.fade(from_gain=-14.0, to_gain=0.0, start=0, end=fade_duration)
         
         # Concatenar ambas secciones
         processed_audio = section_1_reduced + section_2_faded

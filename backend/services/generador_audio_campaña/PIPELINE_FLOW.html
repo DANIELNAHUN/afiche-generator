@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Gran Campaña — Pipeline Flow</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --muted: #8b949e;
+            --accent: #58a6ff;
+            --green: #3fb950;
+            --orange: #d29922;
+            --red: #f85149;
+            --purple: #bc8cff;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 2rem;
+        }
+        h1 { color: var(--accent); margin-bottom: 0.25rem; font-size: 1.8rem; }
+        .subtitle { color: var(--muted); margin-bottom: 2rem; font-size: 0.95rem; }
+        .section { margin-bottom: 3rem; }
+        .section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .mermaid { background: var(--surface); border-radius: 8px; padding: 1.5rem; overflow-x: auto; }
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        .legend-item .dot {
+            width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+        }
+        .details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+        }
+        .card h3 { font-size: 0.95rem; color: var(--accent); margin-bottom: 0.5rem; }
+        .card p { font-size: 0.85rem; color: var(--muted); line-height: 1.5; }
+        .card code { background: #1c2128; padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.82rem; color: var(--green); }
+        .badge {
+            display: inline-block;
+            padding: 0.15em 0.5em;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 0.3rem;
+        }
+        .badge-locutor { background: #1f3a5f; color: var(--accent); }
+        .badge-bg { background: #2a1f3d; color: var(--purple); }
+        .badge-combine { background: #2d3a1f; color: var(--green); }
+        .badge-export { background: #3d2d1f; color: var(--orange); }
+        footer { margin-top: 3rem; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+    </style>
+</head>
+<body>
+
+<h1>🎵 Audio Gran Campaña — Pipeline Flow</h1>
+<p class="subtitle">Módulo: <code>backend/services/generador_audio_campaña</code> · Orquestador: <code>AudioProcessor</code></p>
+
+<!-- ───────────────────────── MAIN PIPELINE ───────────────────────── -->
+<div class="section">
+    <h2>Pipeline Principal (9 etapas)</h2>
+    <div class="mermaid">
+flowchart TD
+    START(["🎬 Inicio: AudioProcessor.process()"]) --> S1
+
+    subgraph S1["Etapa 1 — Validación"]
+        S1A[/"Validar archivos requeridos<br/>(2 fondos musicales)"/]
+    end
+
+    S1 --> S2
+
+    subgraph S2["Etapa 2 — Locutor"]
+        S2A["Cargar secuencia de 5 archivos<br/>(Intro → Evento → Cuerpo → Evento → Cierre)"]
+        S2B["Reducir silencios largos<br/>(max 0.7s)"]
+        S2C["Aplicar eco suave<br/>(delay 150ms, decay 0.3)"]
+        S2D["Aumentar volumen<br/>(+3 dB)"]
+    end
+
+    S2 --> S3
+
+    subgraph S3["Etapa 3 — Primer Fondo"]
+        S3A["Cargar 'Yo tengo un amigo que me ama.mp3'"]
+        S3B["Vol 100% → Fade a 25%<br/>(4s → 5s) → Vol 25%"]
+    end
+
+    S3 --> S4
+
+    subgraph S4["Etapa 4 — Cálculo"]
+        S4A["Fórmula: locutor + 10s − bg1 + 3s<br/>(compensar crossfade)"]
+    end
+
+    S4 --> S5
+
+    subgraph S5["Etapa 5 — Segundo Fondo"]
+        S5A["Cargar 'Eres todo Poderoso.mp3'"]
+        S5B["Recortar a duración calculada"]
+        S5C["Vol 20% → Fade in 1s<br/>→ Vol 100% últimos 4s"]
+    end
+
+    S5 --> S6
+
+    subgraph S6["Etapa 6 — Unificar Fondos"]
+        S6A["Crossfade de 3s<br/>(últimos 3s del bg1 + primeros 3s del bg2)"]
+    end
+
+    S6 --> S7
+
+    subgraph S7["Etapa 7 — Combinar"]
+        S7A["Overlay: locutor sobre fondo"]
+        S7B["Locutor inicia a los 5s del fondo"]
+        S7C["Fade in del fondo 1s antes<br/>de que termine el locutor"]
+    end
+
+    S7 --> S8
+
+    subgraph S8["Etapa 8 — Validación"]
+        S8A{"¿bg = locutor + 10s<br/>(±100ms)?"}
+        S8B{"¿Locutor termina ≥5s<br/>antes del final?"}
+    end
+
+    S8 --> S9
+
+    subgraph S9["Etapa 9 — Exportar"]
+        S9A["Exportar a MP3<br/>(192kbps, VBR max quality)"]
+        S9B[/"Gran_Campana_Final.mp3"/]
+    end
+
+    S9 --> DONE(["✅ Resultado: ProcessingResult"])
+
+    S8A -- No --> WARN1["⚠️ Warning"]
+    S8B -- No --> WARN2["⚠️ Warning"]
+    WARN1 --> S9
+    WARN2 --> S9
+
+    style START fill:#1a3a1a,stroke:#3fb950,color:#3fb950
+    style DONE fill:#1a3a1a,stroke:#3fb950,color:#3fb950
+    style S1 fill:#1a2a3a,stroke:#58a6ff,color:#58a6ff
+    style S2 fill:#1a2a3a,stroke:#58a6ff,color:#58a6ff
+    style S3 fill:#2a1a3a,stroke:#bc8cff,color:#bc8cff
+    style S4 fill:#2a2a1a,stroke:#d29922,color:#d29922
+    style S5 fill:#2a1a3a,stroke:#bc8cff,color:#bc8cff
+    style S6 fill:#2a1a3a,stroke:#bc8cff,color:#bc8cff
+    style S7 fill:#1a3a2a,stroke:#3fb950,color:#3fb950
+    style S8 fill:#3a2a1a,stroke:#d29922,color:#d29922
+    style S9 fill:#3a2a1a,stroke:#d29922,color:#d29922
+    </div>
+
+    <div class="legend">
+        <div class="legend-item"><div class="dot" style="background:#58a6ff"></div> Carga y procesamiento de archivos</div>
+        <div class="legend-item"><div class="dot" style="background:#bc8cff"></div> Procesamiento de fondos musicales</div>
+        <div class="legend-item"><div class="dot" style="background:#3fb950"></div> Combinación de audio</div>
+        <div class="legend-item"><div class="dot" style="background:#d29922"></div> Cálculo, validación y exportación</div>
+    </div>
+</div>
+
+<!-- ─────────────────────── LIFECYCLE / TIMELINE ─────────────────────── -->
+<div class="section">
+    <h2>Línea de Tiempo del Audio Final</h2>
+    <div class="mermaid">
+gantt
+    title Timeline del audio final (ejemplo genérico)
+    dateFormat X
+    axisFormat %s
+
+    section Fondo Musical
+    Fondo 1 (100%)         :done, bg1a, 0, 4000
+    Fade → 25%             :done, bg1b, 4000, 5000
+    Fondo 1 (25%)          :done, bg1c, 5000, bg2start
+    Crossfade (3s)         :done, xfade, bg2start, bg2start+3000
+    Fondo 2 (20%)          :active, bg2a, bg2start+3000, bg2fade
+    Fade in → 100%         :milestone, bg2fade, bg2fade
+    Fondo 2 (100%)         :crit, bg2b, bg2fade, bg2end
+
+    section Locutor
+    (silencio 5s)          :done, loc0, 0, 5000
+    Intro.wav              :active, loc1, 5000, loc2start
+    Evento TTS             :milestone, loc2, loc2start
+    Cuerpo.mp3             :loc3, loc2start, loc4start
+    Evento TTS (rep)       :milestone, loc4, loc4start
+    Cierre.mp3             :loc5, loc4start, locend
+    </div>
+</div>
+
+<!-- ─────────────────────── DETALLES POR COMPONENTE ─────────────────────── -->
+<div class="section">
+    <h2>Detalles por Componente</h2>
+    <div class="details">
+
+        <div class="card">
+            <h3><span class="badge badge-locutor">LOCUTOR</span> LocutorProcessor</h3>
+            <p>
+                Secuencia de 5 archivos en orden:<br>
+                <code>Intro.wav</code> → <code>Evento TTS</code> → <code>Cuerpo.mp3</code> → <code>Evento TTS</code> → <code>Cierre.mp3</code><br><br>
+                Efectos aplicados:<br>
+                • Reducción de silencios (>0.7s se recortan a 0.7s)<br>
+                • Eco suave: delay 150ms, decay 30%<br>
+                • Volumen: +3 dB general
+            </p>
+        </div>
+
+        <div class="card">
+            <h3><span class="badge badge-bg">FONDO 1</span> BackgroundMusicProcessor</h3>
+            <p>
+                Archivo: <code>Yo tengo un amigo que me ama.mp3</code><br><br>
+                Curva de volumen:<br>
+                • 0s → 4s: <strong>100%</strong> (intro musical)<br>
+                • 4s → 5s: <strong>Fade 100% → 25%</strong> (-12dB)<br>
+                • 5s → fin: <strong>25%</strong> constante (acompañamiento)
+            </p>
+        </div>
+
+        <div class="card">
+            <h3><span class="badge badge-bg">FONDO 2</span> BackgroundMusicProcessor</h3>
+            <p>
+                Archivo: <code>Eres todo Poderoso.mp3</code><br>
+                Duración: calculada por fórmula<br><br>
+                Curva de volumen:<br>
+                • Inicio → (fin-5s): <strong>20%</strong> (-14dB)<br>
+                • (fin-5s) → (fin-4s): <strong>Fade in 20% → 100%</strong><br>
+                • Últimos 4s: <strong>100%</strong> (cierre con energía)
+            </p>
+        </div>
+
+        <div class="card">
+            <h3><span class="badge badge-combine">CRUCE</span> Crossfade</h3>
+            <p>
+                Transición de 3 segundos entre bg1 y bg2.<br>
+                Los últimos 3s del fondo 1 se superponen con los primeros 3s del fondo 2.<br><br>
+                <strong>Fórmula duración bg2:</strong><br>
+                <code>locutor_ms + 10000 − bg1_ms + 3000</code>
+            </p>
+        </div>
+
+        <div class="card">
+            <h3><span class="badge badge-combine">COMBINAR</span> AudioCombiner</h3>
+            <p>
+                Overlay del locutor sobre el fondo musical:<br>
+                • Locutor arranca a los <strong>5 segundos</strong><br>
+                • 1 segundo ANTES de que termine el locutor → fade in del fondo a 100%<br>
+                • Desde ahí hasta el final → fondo al 100% + 3dB
+            </p>
+        </div>
+
+        <div class="card">
+            <h3><span class="badge badge-export">EXPORT</span> AudioExporter</h3>
+            <p>
+                Formato: <code>MP3</code><br>
+                Bitrate mínimo: <code>192 kbps</code><br>
+                Encoding: VBR calidad máxima (<code>-q:a 0</code>)<br>
+                Preserva: sample rate y canales originales
+            </p>
+        </div>
+
+    </div>
+</div>
+
+<!-- ─────────────────────── ELEVENLABS GENERATOR ─────────────────────── -->
+<div class="section">
+    <h2>Generador TTS — ElevenLabs</h2>
+    <div class="mermaid">
+flowchart LR
+    A["Parámetros<br/>(fecha, hora, lugar, ref)"] --> B["Construir texto<br/>'ESTE/HOY {fecha}...'"]
+    B --> C["ElevenLabs API<br/>(SDK Python)"]
+    C --> D["Audio TTS<br/>mp3_44100_128"]
+    D --> E{¿Versión?}
+    E -- "ESTE" --> F["campaign_este_*.mp3"]
+    E -- "HOY" --> G["campaign_today_*.mp3"]
+    E -- "both" --> F
+    E -- "both" --> G
+
+    style A fill:#1a2a3a,stroke:#58a6ff,color:#58a6ff
+    style C fill:#2a1a3a,stroke:#bc8cff,color:#bc8cff
+    style E fill:#3a2a1a,stroke:#d29922,color:#d29922
+    style F fill:#1a3a1a,stroke:#3fb950,color:#3fb950
+    style G fill:#1a3a1a,stroke:#3fb950,color:#3fb950
+    </div>
+</div>
+
+<footer>
+    Generado desde el código fuente de <code>backend/services/generador_audio_campaña</code> · Componentes: FileLoader, LocutorProcessor, BackgroundMusicProcessor, AudioCombiner, AudioExporter, ElevenLabsGenerator
+</footer>
+
+<script>
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'dark',
+        themeVariables: {
+            darkMode: true,
+            background: '#161b22',
+            primaryColor: '#1f3a5f',
+            primaryTextColor: '#e6edf3',
+            primaryBorderColor: '#58a6ff',
+            lineColor: '#58a6ff',
+            secondaryColor: '#2a1a3a',
+            tertiaryColor: '#1a2a3a',
+            fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif'
+        },
+        flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
+        gantt: { useMaxWidth: true, barHeight: 24, barGap: 6 }
+    });
+</script>
+</body>
+</html>
