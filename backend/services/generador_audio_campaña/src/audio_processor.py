@@ -8,6 +8,8 @@ de procesamiento de audio, desde la carga de archivos hasta la exportación fina
 from pathlib import Path
 from typing import Optional
 
+from pydub import AudioSegment
+
 from src.file_loader import FileLoader
 from src.locutor_processor import LocutorProcessor
 from src.background_music_processor import BackgroundMusicProcessor
@@ -29,7 +31,7 @@ class AudioProcessor:
     y fondos musicales, aplicar efectos, combinarlos y exportar el resultado final.
     """
     
-    def __init__(self, source_folder: Path, output_folder: Path, event_audio_path: str = None):
+    def __init__(self, source_folder: Path, output_folder: Path, event_audio_path: str = None, debug: bool = False):
         """
         Inicializa el AudioProcessor con carpetas de origen y destino.
         
@@ -37,9 +39,11 @@ class AudioProcessor:
             source_folder: Path a la carpeta que contiene los archivos de audio de origen
             output_folder: Path a la carpeta donde se guardará el archivo final
             event_audio_path: Path al archivo de audio dinámico para esta iteración
+            debug: Si True, exporta archivos intermedios en output_folder/debug/
         """
         self.source_folder = Path(source_folder)
         self.output_folder = Path(output_folder)
+        self.debug = debug
         
         # Inicializar todos los componentes
         self.file_loader = FileLoader(self.source_folder)
@@ -51,6 +55,17 @@ class AudioProcessor:
         logger.info(f"AudioProcessor initialized")
         logger.info(f"Source folder: {self.source_folder}")
         logger.info(f"Output folder: {self.output_folder}")
+        logger.info(f"Debug mode: {self.debug}")
+    
+    def _debug_export(self, audio: AudioSegment, name: str) -> None:
+        """Exporta un audio intermedio a output_folder/debug/ si debug está habilitado."""
+        if not self.debug or audio is None or len(audio) == 0:
+            return
+        debug_dir = self.output_folder / 'debug'
+        debug_dir.mkdir(parents=True, exist_ok=True)
+        path = debug_dir / f'{name}.mp3'
+        audio.export(str(path), format="mp3", bitrate="192k", parameters=["-q:a", "0"])
+        logger.info(f"[DEBUG] Exported: {path} ({len(audio)}ms)")
     
     def process(self, version_suffix: str = "") -> ProcessingResult:
         """
@@ -93,11 +108,15 @@ class AudioProcessor:
             logger.info(f"Locutor processing completed: {len(locutor_result.files_loaded)} files loaded, "
                        f"duration: {locutor_result.duration_ms}ms")
             
+            self._debug_export(locutor_result.audio, '01_locutor_unified')
+            
             # Etapa 3: Procesar primer fondo musical
             logger.info("Stage 3: Processing first background music")
             first_background = self.background_processor.process_first_background()
             first_bg_duration_ms = len(first_background)
             logger.info(f"First background processed: duration={first_bg_duration_ms}ms")
+            
+            self._debug_export(first_background, '02_bg1_processed')
             
             # Etapa 4: Calcular duración del segundo fondo
             logger.info("Stage 4: Calculating second background duration")
@@ -112,6 +131,8 @@ class AudioProcessor:
             second_bg_duration_ms = len(second_background)
             logger.info(f"Second background processed: duration={second_bg_duration_ms}ms")
             
+            self._debug_export(second_background, '03_bg2_processed')
+            
             # Etapa 6: Unificar fondos musicales
             logger.info("Stage 6: Unifying background music")
             background_result = self.background_processor.unify_backgrounds(
@@ -119,6 +140,8 @@ class AudioProcessor:
                 second_background
             )
             logger.info(f"Background unification completed: duration={background_result.duration_ms}ms")
+            
+            self._debug_export(background_result.audio, '04_bg_unified')
             
             # Etapa 7: Combinar locutor con fondo
             logger.info("Stage 7: Combining locutor with background")
@@ -128,6 +151,8 @@ class AudioProcessor:
             )
             final_duration_ms = len(combined_audio)
             logger.info(f"Audio combination completed: duration={final_duration_ms}ms")
+            
+            self._debug_export(combined_audio, '05_combined')
             
             # Etapa 8: Validar duraciones
             logger.info("Stage 8: Validating durations")

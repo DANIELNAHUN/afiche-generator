@@ -131,8 +131,8 @@ class BackgroundMusicProcessor:
         Aplica los siguientes efectos:
         - Recorta a la duración calculada (o usa duración completa si es menor)
         - 20% volumen hasta 5 segundos antes del final
-        - Fade in de 20% a 100% en 1 segundo (de -5s a -4s)
-        - 100% volumen en los últimos 4 segundos
+        - Crossfade de 1 segundo: transición de 20% a 100%
+        - 100% volumen en los últimos ~4 segundos
         
         Args:
             required_duration_ms: Duración requerida en milisegundos
@@ -174,27 +174,23 @@ class BackgroundMusicProcessor:
         
         # Definir puntos de tiempo en milisegundos
         fade_start = actual_duration_ms - 5000  # 5 segundos antes del final
-        fade_end = actual_duration_ms - 4000    # 4 segundos antes del final (1 segundo de fade)
         
         # Sección 1: Desde el inicio hasta 5 segundos antes del final a 20% volumen
         # 20% volumen = -14dB (20 * log10(0.20) ≈ -14dB)
         section_1 = audio[:fade_start]
         section_1_reduced = section_1 - 14.0
         
-        # Sección 2: Fade in de 20% a 100% en 1 segundo + últimos 4 segundos a 100%
+        # Sección 2: Desde 5 segundos antes del final hasta el final, a volumen original (100%)
         section_2 = audio[fade_start:]
-        # Bajar a 20% (-14dB) primero para que el fade arranque desde ese nivel
-        section_2_reduced = section_2 - 14.0
-        # Aplicar fade de -14dB (20%) a 0dB (100%) solo en el primer segundo
-        fade_duration = 1000  # 1 segundo
-        section_2_faded = section_2_reduced.fade(from_gain=-14.0, to_gain=0.0, start=0, end=fade_duration)
         
-        # Concatenar ambas secciones
-        processed_audio = section_1_reduced + section_2_faded
+        # Unir con crossfade de 1 segundo: transición suave de 20% → 100%
+        fade_duration = 1000  # 1 segundo
+        processed_audio = section_1_reduced.append(section_2, crossfade=fade_duration)
         
         logger.info(f"Second background processed: duration={len(processed_audio)}ms")
         logger.debug(f"Section 1 (20%): 0-{fade_start}ms")
-        logger.debug(f"Section 2 (fade in 1s + 100%): {fade_start}-{actual_duration_ms}ms")
+        logger.debug(f"Crossfade 20%→100%: {fade_start}-{fade_start + fade_duration}ms")
+        logger.debug(f"Section 2 (100%): {fade_start + fade_duration}-{actual_duration_ms}ms")
         
         return processed_audio
 

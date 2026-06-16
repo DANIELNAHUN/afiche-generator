@@ -20,6 +20,9 @@ logger = get_logger('main')
 
 def parse_arguments():
     """Parse command line arguments."""
+    # Resolve paths relative to this script's directory, not CWD
+    script_dir = Path(__file__).resolve().parent
+    
     parser = argparse.ArgumentParser(
         description='Audio Gran Campaña - Automated audio processing system',
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -34,15 +37,15 @@ Examples:
     parser.add_argument(
         '-i', '--input',
         type=str,
-        default='backend/services/generador_audio_campaña/files',
-        help='Input folder containing audio files (default: backend/services/generador_audio_campaña/files)'
+        default=str(script_dir / 'files'),
+        help='Input folder containing audio files (default: <script_dir>/files)'
     )
     
     parser.add_argument(
         '-o', '--output',
         type=str,
-        default='temp_files',
-        help='Output folder for processed audio (default: temp_files)'
+        default=str(script_dir.parent / 'temp_files'),
+        help='Output folder for processed audio (default: <script_parent>/temp_files)'
     )
     
     parser.add_argument(
@@ -55,6 +58,12 @@ Examples:
         '--version',
         action='version',
         version='Audio Gran Campaña v1.0.0'
+    )
+    
+    parser.add_argument(
+        '--debug',
+        action='store_true',
+        help='Export intermediate audio files to output_folder/debug/ for inspection'
     )
     
     return parser.parse_args()
@@ -144,7 +153,7 @@ def main():
         
         # Initialize and run audio processor
         logger.info("Initializing AudioProcessor")
-        processor = AudioProcessor(input_folder, output_folder)
+        processor = AudioProcessor(input_folder, output_folder, debug=args.debug)
         
         print("\n🔄 Processing audio files...")
         result = processor.process()

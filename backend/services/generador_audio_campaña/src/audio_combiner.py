@@ -39,8 +39,8 @@ class AudioCombiner:
         Aplica los siguientes efectos:
         - Locutor inicia a los 5 segundos del fondo
         - Locutor mantiene 100% volumen
-        - Fondo musical hace fade a 100% UN SEGUNDO ANTES de que termine el locutor
-        - El volumen máximo del fondo se mantiene hasta el final del audio
+        - Fondo musical mantiene volumen cuando termina el locutor (+3dB en los últimos ~4s)
+        - El volumen del fondo ya está al 100% gracias al crossfade de bg2
         
         Args:
             locutor: AudioSegment del locutor unificado
@@ -91,11 +91,10 @@ class AudioCombiner:
                     fade_segment = background_fade_and_after
                     remaining_segment = AudioSegment.silent(duration=0)
                 
-                # Aplicar fade in gradual al segmento de fade (de volumen actual a +3dB)
-                fade_segment = fade_segment.fade_in(len(fade_segment))
+                # NO aplicar fade_in: el fondo ya está al 100% en este punto
+                # (gracias al crossfade de bg2). Solo aumentar +3dB el resto.
                 
                 # Aumentar el volumen del resto del segmento en +3dB para mayor presencia
-                # Este segmento se mantiene con volumen alto hasta el final
                 if len(remaining_segment) > 0:
                     remaining_segment = remaining_segment + 3.0  # +3dB de incremento
                 
