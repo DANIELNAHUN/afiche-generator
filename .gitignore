@@ -56,8 +56,6 @@ backend/temp_files/*.tiff
 backend/files/output/*
 .ignore/*
 
-# No actualizar cambios en backend/files/
-backend/services/generador_audio_campaña/files/*
 
 # ============================================
 # Logs

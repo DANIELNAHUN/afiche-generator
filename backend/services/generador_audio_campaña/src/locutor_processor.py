@@ -40,7 +40,7 @@ class LocutorProcessor:
         
         # Secuencia específica de archivos de locutor en orden
         self.LOCUTOR_SEQUENCE = [
-            'Gran Campaña - Introduccion.wav',
+            'Segundo Encuentro Evangelistico.mp3',
             self.event_audio_path,
             'Gran Campaña - Cuerpo.mp3',
             self.event_audio_path,
